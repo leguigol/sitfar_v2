@@ -70,6 +70,20 @@ const Empleados = () => {
         getDataEmpleados();
     },[]);
 
+    const formatDate = (timestamp) => {
+      if (!timestamp) {
+        return ''; // Manejar el caso de fecha nula si es necesario
+      }
+      if (timestamp.toDate) {
+        const dateObject = timestamp.toDate(); // Convertir el timestamp a un objeto Date
+        const day = dateObject.getDate();
+        const month = dateObject.getMonth() + 1; // Nota: los meses en JavaScript son de 0 a 11
+        const year = dateObject.getFullYear();
+              // Formatear la fecha en "dd/mm/yyyy"
+        return `${day}/${month}/${year}`;
+
+      }  
+    };
     
           return (
             <>
@@ -107,9 +121,10 @@ const Empleados = () => {
                       <TableCell align="center">{row.apellido}</TableCell>
                       <TableCell align="center">{row.nombres}</TableCell>
                       <TableCell align="center">{categorias[row.categoria]}</TableCell>
-                      {/* <TableCell align="center">{row.fecha_ingreso}</TableCell> */}
-                      <TableCell align="center">{row.fecha_ingreso===null ? '': moment(row.fecha_ingreso).format('DD/MM/YY')}</TableCell>
-                      <TableCell align="center">{row.fecha_egreso===null ? '': moment(row.fecha_egreso).format('DD/MM/YY')}</TableCell>
+                      <TableCell align="center">{formatDate(row.fecha_ingreso)}</TableCell>
+                      <TableCell align="center">{formatDate(row.fecha_egreso)}</TableCell>
+                      {/* <TableCell align="center">{row.fecha_ingreso===null ? '': moment(row.fecha_ingreso).format('DD/MM/YY')}</TableCell>
+                      <TableCell align="center">{row.fecha_egreso===null ? '': moment(row.fecha_egreso).format('DD/MM/YY')}</TableCell> */}
                       <TableCell align="center">{row.licencia ? <Checkbox checked /> : null}</TableCell>
                       <TableCell align="center">{row.reducida ? <Checkbox checked /> : null}</TableCell>
                       <TableCell align="center">{row.sindical ? <Checkbox checked /> : null}</TableCell>

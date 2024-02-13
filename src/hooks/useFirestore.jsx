@@ -106,6 +106,65 @@ export const useFirestore = () => {
       }
     };
     
+    const getDataEmpleadosxPeri = async (periodo) => {
+        console.log('periodo en xperi:',periodo)
+        try {
+          setLoading((prev) => ({ ...prev, getDataE: true }));
+      
+          const cuit = dataFarmacia.cuit;
+          const dataRef = collection(db, "empleados");
+            
+        //   const primerDiaDelMes = new Date(`${periodo.slice(2)}-${periodo.slice(0, 2)}-01T00:00:00`);
+        //   const ultimoDiaDelMesAnterior = new Date(primerDiaDelMes);
+        //   ultimoDiaDelMesAnterior.setDate(ultimoDiaDelMesAnterior.getDate() - 1);
+
+        const primerDiaDelMes = new Date    (`20${periodo.slice(2)}-${periodo.slice(0, 2)}-01T00:00:00`);
+        const ultimoDiaDelMesAnterior = new Date(primerDiaDelMes);
+        ultimoDiaDelMesAnterior.setDate(0);
+        
+        console.log('primer dia: ',primerDiaDelMes);
+          console.log('ultimo dia: ',ultimoDiaDelMesAnterior);
+
+          const q = query(
+            dataRef,
+            where("cuit", "==", cuit),
+            where("fecha_ingreso", "<=", primerDiaDelMes)
+          );
+      
+          const querySnapshot = await getDocs(q);
+          const dataDB = querySnapshot.docs.map((doc) => doc.data());
+      
+          console.log("data db empleados por periodo:", dataDB);
+          setDataEmpleado(dataDB);
+        } catch (error) {
+          console.error("error retriving empleados por periodo", error);
+          setError(error.message);
+        } finally {
+          setLoading((prev) => ({ ...prev, getDataE: false }));
+        }
+    };
+      
+    const getSNR = async (periodo, categoria) => {
+        console.log('periodo: ',periodo, ' y categoria: ',categoria);
+        try {
+          const dataRef = collection(db, 'sumas_snr'); 
+      
+          const q = query(dataRef, where('periodo', '==', periodo), where('categoria', '==', categoria));
+          
+          const querySnapshot = await getDocs(q);
+      
+          if (querySnapshot.size > 0) {
+            return querySnapshot.docs[0].data().snr;
+          } else {
+            console.log('No se encontraron documentos para el periodo y la categoría especificados');
+            return null; 
+          }
+        } catch (error) {
+          console.error('Error al obtener el documento:', error);
+          throw error;
+        }
+    };
+       
     const addDataF=async(formData)=>{
           
         try{
@@ -132,6 +191,7 @@ export const useFirestore = () => {
 
     const addDataE=async(formData)=>{
         console.log("formdata:",formData);
+        console.log("tipo de fecha: ",typeof(formData.fechaingreso))
         try{
             setLoading(prev=>({...prev, addDataE: true}));
             
@@ -141,7 +201,8 @@ export const useFirestore = () => {
               // Manejar caso de categoría no mapeada
               throw new Error('Categoría no válida');
             }
-        
+
+            const fechaingreso=formData.fechaingreso+"T00:00:00";
 
             const newDoc={
                 id: nanoid(6),
@@ -151,7 +212,7 @@ export const useFirestore = () => {
                 nombres: formData.nombres.toUpperCase(),
                 categoria: xcategoria,
                 // fecha_ingreso: formData.fechaingreso.toISOString(),
-                fecha_ingreso: formData.fechaingreso ? formData.fechaingreso : null,
+                fecha_ingreso: new Date(fechaingreso),
                 fecha_egreso: null,
                 licencia: formData.licencia,
                 reducida: formData.reducida,
@@ -185,6 +246,9 @@ export const useFirestore = () => {
         console.log('datos de empleado:',empleado,' nanoid:',nanoid)
         try{
             const xcategoria = categoryMappings[empleado.categoria];
+            const fechaingreso=empleado.fechaingreso+"T00:00:00";
+            const fechaegreso=empleado.fechaegreso+"T00:00:00";
+
             setLoading((prev)=> ({...prev, updateData: true}));
             const docRef=doc(db,"empleados",nanoid);
                     await updateDoc(docRef, 
@@ -192,8 +256,8 @@ export const useFirestore = () => {
                         apellido: empleado.apellido.toUpperCase(),
                         nombres: empleado.nombres.toUpperCase(),
                         categoria: xcategoria,
-                        fecha_ingreso: empleado.fechaingreso ? empleado.fechaingreso : null,
-                        fecha_egreso: empleado.fechaegreso ? empleado.fechaegreso : null,
+                        fecha_ingreso: new Date(fechaingreso),
+                        fecha_egreso: empleado.fechaegreso ? new Date(fechaegreso) : null,
                         licencia: empleado.licencia,
                         reducida: empleado.reducida,
                         sindical: empleado.sindical
@@ -215,7 +279,9 @@ export const useFirestore = () => {
         addDataF,addDataE,getDataEmpleados,
         deleteEmpleado,
         getDataEmpleadoById,
-        updateEmpleado
+        updateEmpleado,
+        getDataEmpleadosxPeri,
+        getSNR
     }
     
 }

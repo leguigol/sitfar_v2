@@ -95,7 +95,7 @@ const Eempleado = () => {
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb"> 
 
         <Formik
-          initialValues={{ cuil: dataEmpleado[0].cuil, apellido: dataEmpleado[0].apellido, nombres: dataEmpleado[0].nombres, categoria: categoryMappings[dataEmpleado[0].categoria], fechaingreso: dayjs(dataEmpleado[0].fecha_ingreso).format('YYYY-MM-DD'), fechaegreso: dataEmpleado[0].fecha_egreso===null ? null : dayjs(dataEmpleado[0].fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado[0].licencia, reducida: dataEmpleado[0].reducida, sindical: dataEmpleado[0].sindical }}
+          initialValues={{ cuil: dataEmpleado[0].cuil, apellido: dataEmpleado[0].apellido, nombres: dataEmpleado[0].nombres, categoria: categoryMappings[dataEmpleado[0].categoria], fechaingreso: dayjs(dataEmpleado[0].fecha_ingreso).format('DD/MM/YYY'), fechaegreso: dataEmpleado[0].fecha_egreso===null ? null : dayjs(dataEmpleado[0].fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado[0].licencia, reducida: dataEmpleado[0].reducida, sindical: dataEmpleado[0].sindical }}
           onSubmit={onSubmit}
           validationSchema={validationSchema}
         >
@@ -172,8 +172,8 @@ const Eempleado = () => {
                       component={DesktopDatePicker}
                       name="fechaingreso"
                       label="fecha de ingreso"
-                      value={dayjs(values.fechaingreso)} // Asegúrate de que el valor sea un objeto Date
-                      onChange={(date) => setFieldValue('fechaingreso', dayjs(date).format('YYYY-MM-DD'))}
+                      value={values.fechaingreso instanceof Date ? values.fechaingreso : null} // Asegúrate de que el valor sea un objeto Date
+                      // onChange={(date) => setFieldValue('fechaingreso', dayjs(date).format('YYYY-MM-DD'))}
                   />
                 </Stack> 
                 <Stack>
