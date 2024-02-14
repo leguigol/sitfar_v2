@@ -6,11 +6,14 @@ export const UserContext=createContext();
 
 const UserProvider=({children})=>{
 
-    const savedDataFarmacia=JSON.parse(localStorage.getItem("dataFarmacia")) || [];
+    // const savedDataFarmacia=JSON.parse(localStorage.getItem("dataFarmacia")) || [];
     const savedDataEmpleado=JSON.parse(localStorage.getItem("dataEmpleado")) || [];
 
-    const [dataFarmacia,setDataFarmacia]=useState(savedDataFarmacia);
+    // const [dataFarmacia,setDataFarmacia]=useState(savedDataFarmacia);
     const [dataEmpleado,setDataEmpleado]=useState(savedDataEmpleado);
+
+    const [dataFarmacia,setDataFarmacia]=useState([]);
+
     const [user,setUser]=useState(false);
     const [loading,setLoading]=useState(false);
 
@@ -28,7 +31,7 @@ const UserProvider=({children})=>{
     }, [dataFarmacia, dataEmpleado]);
 
     if(user===false) return <p>Loading app....</p>
-    
+
     return (
         <UserContext.Provider value={{user,setUser,loading,setLoading,dataFarmacia,setDataFarmacia,dataEmpleado,setDataEmpleado}}>
             {children}

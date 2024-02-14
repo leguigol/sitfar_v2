@@ -11,25 +11,15 @@ import Swal from 'sweetalert2';
 
 const Login = () => {
 
-  const [email, setEmail]=useState('')
   const {user, setUser}=useUserContext();
 
-  // const [password, setPassword]=useState('')
-
   const navigate=useNavigate();
-  // const {user}=useUserContext();
 
-
-  // const handleSubmit= async(e)=>{
-  //   e.preventDefault();
-  //   console.log('me diste a submit');
-  //   try{
-  //     const credentialUser=await login({email,password});
-  //     console.log(credentialUser);
-  //   }catch(error){
-  //     console.log(error);
-  //   }
-  // }
+  useEffect(()=>{
+    if(user){
+      navigate('/dashboard');
+    }
+  },[user])
 
   const onSubmit=async({email, password},{setSubmitting, setErrors})=>{
     console.log({email,password});
@@ -41,7 +31,6 @@ const Login = () => {
       };
       setUser(userInformation);
       navigate('/dashboard');
-      //console.log(credentialUser);
     }catch(error){
       console.log({error});
       // console.log("codigo: ",error.code);

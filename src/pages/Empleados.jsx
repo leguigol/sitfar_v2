@@ -1,5 +1,5 @@
 import {useFirestore} from '../hooks/useFirestore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -14,16 +14,18 @@ import { Box, Button } from '@mui/material';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
-// function createData(id, cuil, apellido, nombres, categoria,feingreso,feegreso) {
-//     return { id,cuil, apellido, nombres, categoria,feingreso,feegreso };
-//   }
 
 const Empleados = () => {
 
-    const {loading,dataEmpleado}=useUserContext()
-    const {getDataEmpleados,deleteEmpleado,getDataEmpleadoById}=useFirestore();
+    const {loading,dataEmpleado,setDataEmpleado}=useUserContext()
+    const {getDataFarmacia,getDataEmpleados,deleteEmpleado,getDataEmpleadoById,dataFar,dataEmp}=useFirestore();
+    const [dataEmpleadoArray, setDataEmpleadoArray] = useState([]);
 
     const navigate=useNavigate();
+
+    useEffect(()=>{
+      getDataEmpleados();
+    },[]);
 
     const categorias = [
       'Cadete',
@@ -62,13 +64,10 @@ const Empleados = () => {
     const handleUpdate=(id)=>{
       console.log('hiciste click en update',id)
       getDataEmpleadoById(id);
-      console.log('los datos del empleado:',dataEmpleado);
-      navigate('/edit-empleado');
+      console.log('los datos del empleado:',dataEmp);
+      navigate(`/edit-empleado/${id}`);
     }
 
-    useEffect(()=>{
-        getDataEmpleados();
-    },[]);
 
     const formatDate = (timestamp) => {
       if (!timestamp) {
@@ -109,7 +108,7 @@ const Empleados = () => {
                 <TableBody>
                   
                   {
-                    dataEmpleado.map((row) => (
+                    dataEmp.map((row) => (
                     <TableRow
                       key={row.id}
                       sx={{ '&:last-child td, &:last-child th': { border: 0 } }}

@@ -6,8 +6,8 @@ import { nanoid } from 'nanoid'
 
 export const useFirestore = () => {
 
-    const [data,setData]=useState([]);
-    const [dataEmp,setDataemp]=useState([]);
+    const [dataFar,setDataFar]=useState([]);
+    const [dataEmp,setDataEmp]=useState([]);
     const [error,setError]=useState();
     const [loading,setLoading]=useState({});
     const {dataFarmacia,setDataFarmacia,dataEmpleado,setDataEmpleado}=useUserContext();
@@ -23,10 +23,6 @@ export const useFirestore = () => {
         'Farmaceutico Art.7 B': 7,
         'Farmaceutico Art.7 C': 8,
     };
-
-    useEffect(()=>{
-        getDataFarmacia();
-    },[])
 
     const getDataFarmacia=async()=>{
         console.log('auth:',auth.currentUser.uid);
@@ -46,12 +42,6 @@ export const useFirestore = () => {
                 console.log('No such document!');
             }
 
-            // const dataRef=collection(db,"farmacias");
-            // const q=query(dataRef,where("id","==",auth.currentUser.uid));
-            // const querySnapshot=await getDocs(q);
-            // const dataDB=querySnapshot.docs.map((doc) => doc.data());
-            // console.log('datadb:',dataDB);
-            // setDataFarmacia(dataDB);
         }catch(error){
             console.log('error retriving farmacias',error);
             setError(error.message); 
@@ -71,7 +61,7 @@ export const useFirestore = () => {
             const querySnapshot=await getDocs(q);
             const dataDB=querySnapshot.docs.map((doc) => doc.data());
             console.log('data db empleados:',dataDB);
-            setDataEmpleado(dataDB);
+            setDataEmp(dataDB);
         }catch(error){
             console.log('error retriving farmacias',error);
             setError(error.message); 
@@ -93,10 +83,10 @@ export const useFirestore = () => {
             ...empleadoDoc.data(),
           };
           console.log('empleadoData:',empleadoData)
-          setDataemp(empleadoData);
+          setDataEmp(empleadoData);
         } else {
           console.log(`No existe un empleado con el ID ${empleadoId}`);
-          setDataemp(null);
+          setDataEmp(false);
         }
       } catch (error) {
         console.error('Error al recuperar empleado por ID:', error);
@@ -211,7 +201,6 @@ export const useFirestore = () => {
                 apellido: formData.apellido.toUpperCase(),
                 nombres: formData.nombres.toUpperCase(),
                 categoria: xcategoria,
-                // fecha_ingreso: formData.fechaingreso.toISOString(),
                 fecha_ingreso: new Date(fechaingreso),
                 fecha_egreso: null,
                 licencia: formData.licencia,
@@ -271,7 +260,7 @@ export const useFirestore = () => {
         }
     }
     return {
-        data,
+        dataFar,
         dataEmp,
         error,
         loading,

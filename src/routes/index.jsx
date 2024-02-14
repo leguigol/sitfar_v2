@@ -65,11 +65,11 @@ export const router=createBrowserRouter([
                 ]
             },
             {
-                path:'/edit-empleado',
+                path:'/edit-empleado/:id',
                 element: <LayoutPrivate />,
                 children: [
                     {
-                        path: '/edit-empleado',
+                        path: '/edit-empleado/:id',
                         element: <Eempleado />
                     }
                 ]

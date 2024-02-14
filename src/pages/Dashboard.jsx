@@ -7,8 +7,8 @@ import { useFirestore } from "../hooks/useFirestore";
 
 const Dashboard = () => {
 
-    const { dataFarmacia }=useUserContext();
-    const { getDataFarmacia}=useFirestore();
+    const { dataFarmacia,setUser }=useUserContext();
+    const { dataFar,getDataFarmacia,loading}=useFirestore();
 
     const navigate = useNavigate();
 
@@ -26,11 +26,10 @@ const Dashboard = () => {
         }
     }
 
-
     return (
         <>
             <h2>Bienvenido: {dataFarmacia.razon}</h2> 
-            <button onClick={handleLogout}>Logout</button>
+            <button onClick={handleLogout}>Logout</button>        
         </>
     )
 }

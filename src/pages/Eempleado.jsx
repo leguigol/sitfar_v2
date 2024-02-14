@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react'
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import * as Yup from "yup";
 import { LoadingButton } from '@mui/lab';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {useFirestore} from '../hooks/useFirestore';
 
-import dayjs from 'dayjs';
+import dayjs, { unix } from 'dayjs';
 import 'dayjs/locale/en-gb';
+import moment from 'moment';
 
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -21,19 +22,27 @@ import { useUserContext } from '../context/UserContext';
 const Eempleado = () => {
 
     const navigate=useNavigate();
-    const {updateEmpleado}=useFirestore();
+    const {updateEmpleado,dataEmp,getDataEmpleadoById}=useFirestore();
     const {dataEmpleado}=useUserContext();
     const [dataId, setDataId]=useState();
+    const [dataEmp2,setDataEmp2]=useState([]);
 
-    if(!dataEmpleado){
-        navigate('/empleados');
-    }
-    
-    console.log('aca esta el dataEmpleado: ',dataEmpleado);
-    console.log('la fecha: ',dataEmpleado[0].fecha_ingreso);
+    const { id }=useParams();
+    console.log('id:',id)
+
+    useEffect(()=>{
+      getDataEmpleadoById(id);
+      setDataEmp2(...dataEmp);
+    },[])
+
+  if(!dataEmp){
+      navigate('/empleados');
+  }
+  console.log('aca esta el dataEmpleado: ',dataEmp2);
+    console.log('la fecha: ',dataEmp.fecha_ingreso);
     
     useEffect(()=>{
-      setDataId(dataEmpleado[0].id);
+      setDataId(dataEmp.id);
     },[])
 
 
@@ -82,6 +91,24 @@ const Eempleado = () => {
     'Farmaceutico Art.7 C'
   ];
   
+  const convertirTime=(time)=>{
+    console.log(typeof time);
+    // const unixTimestamp = time.seconds; // Replace this with your Unix timestamp
+
+    // const date = new Date(unixTimestamp * 1000); // Convert Unix timestamp to milliseconds
+  
+    // // Get the various components of the date
+    // const year = date.getFullYear();
+    // const month = date.getMonth() + 1; // Month is 0-indexed, so we add 1
+    // const day = date.getDate();
+    // const hours = date.getHours();
+    // const minutes = date.getMinutes();
+    // const seconds = date.getSeconds(); 
+
+    // console.log(`${year}-${month}-${day} ${hours}-${minutes}-${seconds}`);
+
+    // return `${year}-${month}-${day}`
+  }
 
   return (
 
@@ -95,7 +122,8 @@ const Eempleado = () => {
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb"> 
 
         <Formik
-          initialValues={{ cuil: dataEmpleado[0].cuil, apellido: dataEmpleado[0].apellido, nombres: dataEmpleado[0].nombres, categoria: categoryMappings[dataEmpleado[0].categoria], fechaingreso: dayjs(dataEmpleado[0].fecha_ingreso).format('DD/MM/YYY'), fechaegreso: dataEmpleado[0].fecha_egreso===null ? null : dayjs(dataEmpleado[0].fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado[0].licencia, reducida: dataEmpleado[0].reducida, sindical: dataEmpleado[0].sindical }}
+          // initialValues={{ cuil: dataEmpleado.cuil, apellido: dataEmpleado.apellido, nombres: dataEmpleado.nombres, categoria: categoryMappings[dataEmpleado.categoria], fechaingreso: convertirTime(dataEmpleado.fecha_ingreso), fechaegreso: dataEmpleado.fecha_egreso===null ? null : dayjs(dataEmpleado.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado.licencia, reducida: dataEmpleado.reducida, sindical: dataEmpleado.sindical }}
+          initialValues={{ cuil: dataEmp2.cuil, apellido: dataEmp2.apellido, nombres: dataEmp2.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs(convertirTime(dataEmp.fecha_ingreso)), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
           onSubmit={onSubmit}
           validationSchema={validationSchema}
         >
@@ -160,7 +188,7 @@ const Eempleado = () => {
                         >
                             {/* Opciones de categorías generadas dinámicamente */}
                             {categorias.map((categoria) => (
-                                <MenuItem key={categoria} value={categoria} selected={categorias[dataEmpleado[0].categoria] === categoria}>
+                                <MenuItem key={categoria} value={categoria} selected={categorias[dataEmp.categoria] === categoria}>
                                 {categoria}
                                 </MenuItem>
                             ))}
@@ -172,7 +200,8 @@ const Eempleado = () => {
                       component={DesktopDatePicker}
                       name="fechaingreso"
                       label="fecha de ingreso"
-                      value={values.fechaingreso instanceof Date ? values.fechaingreso : null} // Asegúrate de que el valor sea un objeto Date
+                      value={values.fechaingreso}
+                      onChange={(date) => setFieldValue('fechaingreso', date)}
                       // onChange={(date) => setFieldValue('fechaingreso', dayjs(date).format('YYYY-MM-DD'))}
                   />
                 </Stack> 
@@ -184,7 +213,7 @@ const Eempleado = () => {
                       value={values.fechaegreso===null ? null : dayjs(values.fechaegreso)} // Asegúrate de que el valor sea un objeto Date
                       onChange={(date) => setFieldValue('fechaegreso', dayjs(date).format('YYYY-MM-DD'))}
                   />
-                </Stack> 
+                </Stack>  
 
                 <FormGroup>
                   <FormControlLabel control={<Checkbox checked={values.licencia} onChange={handleChange} name="licencia"/>} label="En licencia" />
