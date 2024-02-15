@@ -25,30 +25,29 @@ const Eempleado = () => {
     const {updateEmpleado,dataEmp,getDataEmpleadoById}=useFirestore();
     const {dataEmpleado}=useUserContext();
     const [dataId, setDataId]=useState();
+    const [auxEmp,setAuxEmp]=useState([]);
 
     const { id }=useParams();
     console.log('id:',id)
 
-    useEffect(()=>{
+    useEffect(() => {
       const fetchData = async () => {
-        try {
-          await getDataEmpleadoById(id);
-          console.log('recogi el dataEmp')
-        } catch (error) {
-          console.error('Error al obtener datos del empleado:', error);
+        try{
+          console.log('id en effect:',id)          
+          const empleadoData = await getDataEmpleadoById(id);
+          console.log('empleado Data useEffect:', empleadoData);
+          setAuxEmp(empleadoData); 
+        }catch(error){
+          console.log(error);
         }
       };
     
       fetchData();
-    }, []);
+    }, [id]);
 
-  console.log('aca esta el dataEmpleado: ',dataEmp);
-  console.log('la fecha: ',dataEmp.fecha_ingreso);
-    
-    // useEffect(()=>{
-    //   setDataId(dataEmp.id);
-    // },[dataEmp])
-
+    useEffect(() => {
+      console.log('auxEmp: ', auxEmp.cuil, 'tipo: ',(typeof(auxEmp.cuil)));
+    }, [auxEmp]);
 
     const onSubmit=async(values,{setSubmitting, setErrors})=>{
         console.log('submit',values)
@@ -71,19 +70,6 @@ const Eempleado = () => {
         })  
         
 
-  const categoryMappings = {
-    0: 'Cadete',
-    1: 'Aprendiz/Ayudante',
-    2: 'Personal auxiliar',
-    3: 'Personal con asignacion',
-    4: 'Ayudante en gestion',
-    5: 'Personal en gestion',
-    6: 'Farmaceutico Art.7 A',
-    7: 'Farmaceutico Art.7 B',
-    8: 'Farmaceutico Art.7 C'
-};
-
-
   const categorias = [
     'Cadete',
     'Aprendiz/Ayudante',
@@ -96,24 +82,25 @@ const Eempleado = () => {
     'Farmaceutico Art.7 C'
   ];
   
-  const convertirTime=(time)=>{
-    console.log(typeof time);
-    const unixTimestamp = time.seconds; 
 
-    // const date = new Date(unixTimestamp * 1000); // Convert Unix timestamp to milliseconds
+  // const convertirTime=(time)=>{
+  //   console.log(typeof time);
+  //   const unixTimestamp = time.seconds; 
+
+  //   // const date = new Date(unixTimestamp * 1000); // Convert Unix timestamp to milliseconds
   
-    // // Get the various components of the date
-    // const year = date.getFullYear();
-    // const month = date.getMonth() + 1; // Month is 0-indexed, so we add 1
-    // const day = date.getDate();
-    // const hours = date.getHours();
-    // const minutes = date.getMinutes();
-    // const seconds = date.getSeconds(); 
+  //   // // Get the various components of the date
+  //   // const year = date.getFullYear();
+  //   // const month = date.getMonth() + 1; // Month is 0-indexed, so we add 1
+  //   // const day = date.getDate();
+  //   // const hours = date.getHours();
+  //   // const minutes = date.getMinutes();
+  //   // const seconds = date.getSeconds(); 
 
-    // console.log(`${year}-${month}-${day} ${hours}-${minutes}-${seconds}`);
+  //   // console.log(`${year}-${month}-${day} ${hours}-${minutes}-${seconds}`);
 
-    // return `${year}-${month}-${day}`
-  }
+  //   // return `${year}-${month}-${day}`
+  // }
 
   return (
 
@@ -129,12 +116,14 @@ const Eempleado = () => {
         <Formik
           // initialValues={{ cuil: dataEmpleado.cuil, apellido: dataEmpleado.apellido, nombres: dataEmpleado.nombres, categoria: categoryMappings[dataEmpleado.categoria], fechaingreso: convertirTime(dataEmpleado.fecha_ingreso), fechaegreso: dataEmpleado.fecha_egreso===null ? null : dayjs(dataEmpleado.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado.licencia, reducida: dataEmpleado.reducida, sindical: dataEmpleado.sindical }}
           // initialValues={{ cuil: dataEmp.cuil, apellido: dataEmp.apellido, nombres: dataEmp.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs(convertirTime(dataEmp.fecha_ingreso)), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
-          initialValues={{ cuil: dataEmp[0].cuil, apellido: dataEmp[0].apellido, nombres: dataEmp.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs("2024-01-01"), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
+          // initialValues={{ cuil: auxEmp.cuil, apellido: auxEmp.apellido, nombres: auxEmp.nombres, categoria: 0, fechaingreso: dayjs("2024-01-01"), fechaegreso: auxEmp.fecha_egreso===null ? null : dayjs(auxEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: auxEmp.licencia, reducida: auxEmp.reducida, sindical: auxEmp.sindical }}
+          initialValues={{ cuil: auxEmp.cuil }}
           onSubmit={onSubmit}
           validationSchema={validationSchema}
         >
           {
-            ({values, handleSubmit,handleChange,errors,touched,handleBlur,isSubmitting,setFieldValue})=>(
+            
+            ({values, handleSubmit,handleChange,errors,touched,handleBlur,isSubmitting})=>(
               // <form onSubmit={handleSubmit}>
               <Box onSubmit={handleSubmit} sx={{mt:1}} component="form">
 
@@ -152,6 +141,9 @@ const Eempleado = () => {
                   helperText={errors.cuil && touched.cuil && errors.cuil}
                 />
                 <TextField
+                  value={auxEmp.cuil}
+                />
+                {/* <TextField
                   placeholder='apellido' 
                   value={values.apellido} 
                   onChange={handleChange}
@@ -177,30 +169,34 @@ const Eempleado = () => {
                   error={errors.nombres && touched.nombres}
                   helperText={errors.nombres && touched.nombres && errors.nombres}
                 />
-                <FormControl fullWidth
-                >
-                  <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
-                        <Select
-                            labelId="categoria-label"
-                            id="categoria"
-                            name="categoria"
-                            value={values.categoria}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            label="Categoría"
-                            sx={{ mb: 3}}
-                            error={errors.categoria && touched.categoria}
-                            autoWidth
-                        >
-                            {/* Opciones de categorías generadas dinámicamente */}
-                            {categorias.map((categoria) => (
-                                <MenuItem key={categoria} value={categoria} selected={categorias[dataEmp.categoria] === categoria}>
-                                {categoria}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                </FormControl>   
-                <Stack>
+                {/* <FormControl fullWidth>
+                    <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
+                    <Select
+                        labelId="categoria-label"
+                        id="categoria"
+                        name="categoria"
+                        value={values.categoria}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        label="Categoría"
+                        sx={{ mb: 3}}
+                        error={errors.categoria && touched.categoria}
+                        autoWidth
+                    >
+                        <MenuItem>
+                        {
+                            categorias.map((category) => {
+                            <MenuItem>{category}</MenuItem>
+                        })
+                        }                        
+                        </MenuItem>
+                    </Select>
+                </FormControl>
+                <TextField 
+                  value={values.categoria}  
+                /> */}
+
+                {/* <Stack>
                   <Field 
                       sx={{ mb: 3}}
                       component={DesktopDatePicker}
@@ -225,7 +221,7 @@ const Eempleado = () => {
                   <FormControlLabel control={<Checkbox checked={values.licencia} onChange={handleChange} name="licencia"/>} label="En licencia" />
                   <FormControlLabel control={<Checkbox checked={values.reducida} onChange={handleChange} name="reducida"/>} label="Jornada reducida" />
                   <FormControlLabel control={<Checkbox checked={values.sindical} onChange={handleChange} name="sindical"/>} label="Sindical " />
-                </FormGroup>  
+                </FormGroup>   */} 
                 <LoadingButton
                   type="submit"
                   disabled={isSubmitting} 

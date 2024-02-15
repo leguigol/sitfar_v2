@@ -77,12 +77,13 @@ export const useFirestore = () => {
         console.log("🚀 ~ getDataEmpleadoById ~ empleadoDoc:", empleadoDoc)
     
         if (empleadoDoc.exists()) {
+          console.log('Respuesta: EXISTE !!!');
           const empleadoData = {
             id: empleadoDoc.id,
             ...empleadoDoc.data(),
           };
           console.log('empleadoData:',empleadoData)
-          setDataEmp(empleadoData);
+          return(empleadoData);
         } else {
           console.log(`No existe un empleado con el ID ${empleadoId}`);
           setDataEmp(false);

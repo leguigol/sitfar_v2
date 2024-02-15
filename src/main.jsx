@@ -20,6 +20,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <UserProvider>
         <RouterProvider router={router} />
       </UserProvider>
-    </CssBaseline>
+    </CssBaseline>,
   // </React.StrictMode>,
 )
