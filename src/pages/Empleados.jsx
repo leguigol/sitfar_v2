@@ -17,16 +17,16 @@ import Swal from 'sweetalert2';
 
 const Empleados = () => {
 
-    const {loading,dataEmpleado,setDataEmpleado}=useUserContext()
-    const {getDataFarmacia,getDataEmpleados,deleteEmpleado,getDataEmpleadoById,dataFar,dataEmp}=useFirestore();
-    const [dataEmpleadoArray, setDataEmpleadoArray] = useState([]);
+    const {loading,dataEmpleado,setDataEmpleado,dataFarmacia,setDataFarmacia}=useUserContext()
+    const {getDataFarmacia,getDataEmpleados,deleteEmpleado,getDataEmpleadoById,dataFar,dataEmp,error}=useFirestore();
 
     const navigate=useNavigate();
 
     useEffect(()=>{
-      getDataEmpleados();
+      getDataEmpleados(dataFarmacia.cuit);
     },[]);
 
+    console.log('data farmacias en empleados: ',dataFarmacia.cuit)
     const categorias = [
       'Cadete',
       'Aprendiz/Ayudante',
@@ -62,12 +62,11 @@ const Empleados = () => {
     }
 
     const handleUpdate=(id)=>{
-      console.log('hiciste click en update',id)
-      getDataEmpleadoById(id);
-      console.log('los datos del empleado:',dataEmp);
       navigate(`/edit-empleado/${id}`);
     }
 
+    if (loading) return <p>Loading data....</p>
+    if (error) return <p>{error}</p>
 
     const formatDate = (timestamp) => {
       if (!timestamp) {

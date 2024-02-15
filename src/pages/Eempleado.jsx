@@ -25,25 +25,29 @@ const Eempleado = () => {
     const {updateEmpleado,dataEmp,getDataEmpleadoById}=useFirestore();
     const {dataEmpleado}=useUserContext();
     const [dataId, setDataId]=useState();
-    const [dataEmp2,setDataEmp2]=useState([]);
 
     const { id }=useParams();
     console.log('id:',id)
 
     useEffect(()=>{
-      getDataEmpleadoById(id);
-      setDataEmp2(...dataEmp);
-    },[])
-
-  if(!dataEmp){
-      navigate('/empleados');
-  }
-  console.log('aca esta el dataEmpleado: ',dataEmp2);
-    console.log('la fecha: ',dataEmp.fecha_ingreso);
+      const fetchData = async () => {
+        try {
+          await getDataEmpleadoById(id);
+          console.log('recogi el dataEmp')
+        } catch (error) {
+          console.error('Error al obtener datos del empleado:', error);
+        }
+      };
     
-    useEffect(()=>{
-      setDataId(dataEmp.id);
-    },[])
+      fetchData();
+    }, []);
+
+  console.log('aca esta el dataEmpleado: ',dataEmp);
+  console.log('la fecha: ',dataEmp.fecha_ingreso);
+    
+    // useEffect(()=>{
+    //   setDataId(dataEmp.id);
+    // },[dataEmp])
 
 
     const onSubmit=async(values,{setSubmitting, setErrors})=>{
@@ -79,6 +83,7 @@ const Eempleado = () => {
     8: 'Farmaceutico Art.7 C'
 };
 
+
   const categorias = [
     'Cadete',
     'Aprendiz/Ayudante',
@@ -93,7 +98,7 @@ const Eempleado = () => {
   
   const convertirTime=(time)=>{
     console.log(typeof time);
-    // const unixTimestamp = time.seconds; // Replace this with your Unix timestamp
+    const unixTimestamp = time.seconds; 
 
     // const date = new Date(unixTimestamp * 1000); // Convert Unix timestamp to milliseconds
   
@@ -123,7 +128,8 @@ const Eempleado = () => {
 
         <Formik
           // initialValues={{ cuil: dataEmpleado.cuil, apellido: dataEmpleado.apellido, nombres: dataEmpleado.nombres, categoria: categoryMappings[dataEmpleado.categoria], fechaingreso: convertirTime(dataEmpleado.fecha_ingreso), fechaegreso: dataEmpleado.fecha_egreso===null ? null : dayjs(dataEmpleado.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado.licencia, reducida: dataEmpleado.reducida, sindical: dataEmpleado.sindical }}
-          initialValues={{ cuil: dataEmp2.cuil, apellido: dataEmp2.apellido, nombres: dataEmp2.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs(convertirTime(dataEmp.fecha_ingreso)), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
+          // initialValues={{ cuil: dataEmp.cuil, apellido: dataEmp.apellido, nombres: dataEmp.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs(convertirTime(dataEmp.fecha_ingreso)), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
+          initialValues={{ cuil: dataEmp[0].cuil, apellido: dataEmp[0].apellido, nombres: dataEmp.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs("2024-01-01"), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
           onSubmit={onSubmit}
           validationSchema={validationSchema}
         >

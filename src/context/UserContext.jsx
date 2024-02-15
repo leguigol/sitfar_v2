@@ -7,10 +7,10 @@ export const UserContext=createContext();
 const UserProvider=({children})=>{
 
     // const savedDataFarmacia=JSON.parse(localStorage.getItem("dataFarmacia")) || [];
-    const savedDataEmpleado=JSON.parse(localStorage.getItem("dataEmpleado")) || [];
+    // const savedDataEmpleado=JSON.parse(localStorage.getItem("dataEmpleado")) || [];
 
     // const [dataFarmacia,setDataFarmacia]=useState(savedDataFarmacia);
-    const [dataEmpleado,setDataEmpleado]=useState(savedDataEmpleado);
+    // const [dataEmpleado,setDataEmpleado]=useState(savedDataEmpleado);
 
     const [dataFarmacia,setDataFarmacia]=useState([]);
 
@@ -25,15 +25,15 @@ const UserProvider=({children})=>{
         return unsuscribe;
     },[]);
 
-    useEffect(()=>{
-        localStorage.setItem("dataFarmacia",JSON.stringify(dataFarmacia));
-        localStorage.setItem("dataEmpleado",JSON.stringify(dataEmpleado));
-    }, [dataFarmacia, dataEmpleado]);
+    // useEffect(()=>{
+    //     localStorage.setItem("dataFarmacia",JSON.stringify(dataFarmacia));
+    //     localStorage.setItem("dataEmpleado",JSON.stringify(dataEmpleado));
+    // }, [dataFarmacia, dataEmpleado]);
 
     if(user===false) return <p>Loading app....</p>
 
     return (
-        <UserContext.Provider value={{user,setUser,loading,setLoading,dataFarmacia,setDataFarmacia,dataEmpleado,setDataEmpleado}}>
+        <UserContext.Provider value={{user,setUser,loading,setLoading,dataFarmacia,setDataFarmacia}}>
             {children}
         </UserContext.Provider>
     )

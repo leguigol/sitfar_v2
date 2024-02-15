@@ -51,9 +51,7 @@ export const useFirestore = () => {
     }
 
     
-    const getDataEmpleados=async()=>{
-        console.log('cuit:',dataFarmacia.cuit)
-        let cuit=dataFarmacia.cuit;
+    const getDataEmpleados=async(cuit)=>{
         try{
             setLoading(prev=>({...prev, getDataE: true}));
             const dataRef=collection(db,"empleados");
@@ -76,6 +74,7 @@ export const useFirestore = () => {
     
         const empleadoRef = doc(db, 'empleados', empleadoId);
         const empleadoDoc = await getDoc(empleadoRef);
+        console.log("🚀 ~ getDataEmpleadoById ~ empleadoDoc:", empleadoDoc)
     
         if (empleadoDoc.exists()) {
           const empleadoData = {
