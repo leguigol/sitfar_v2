@@ -54,11 +54,11 @@ export const useFirestore = () => {
     }
 
     
-    const getDataEmpleados=async(cuit)=>{
+    const getDataEmpleados=async()=>{
         try{
             setLoading(prev=>({...prev, getDataE: true}));
             const dataRef=collection(db,"empleados");
-            const q=query(dataRef,where("cuit","==",cuit));
+            const q=query(dataRef,where("cuit","==",dataFarmacia.cuit));
             const querySnapshot=await getDocs(q);
             const dataDB=querySnapshot.docs.map((doc) => doc.data());
             console.log('data db empleados:',dataDB);
@@ -74,6 +74,7 @@ export const useFirestore = () => {
     const getDataEmpleadoById = async (empleadoId) => {
       try {
         setLoading((prev) => ({ ...prev, getDataEById: true }));
+        setDataEmpleado(null)
     
         const empleadoRef = doc(db, 'empleados', empleadoId);
         const empleadoDoc = await getDoc(empleadoRef);
@@ -85,10 +86,10 @@ export const useFirestore = () => {
             ...empleadoDoc.data(),
           };
           console.log('empleadoData:',empleadoData)
-          setDataEmp(empleadoData);
+          setDataEmpleado(empleadoData);
         } else {
           console.log(`No existe un empleado con el ID ${empleadoId}`);
-          setDataEmp(false);
+          setDataEmpleado(false);
         }
       } catch (error) {
         console.error('Error al recuperar empleado por ID:', error);
@@ -110,7 +111,7 @@ export const useFirestore = () => {
         //   const ultimoDiaDelMesAnterior = new Date(primerDiaDelMes);
         //   ultimoDiaDelMesAnterior.setDate(ultimoDiaDelMesAnterior.getDate() - 1);
 
-        const primerDiaDelMes = new Date    (`20${periodo.slice(2)}-${periodo.slice(0, 2)}-01T00:00:00`);
+        const primerDiaDelMes = new Date(`20${periodo.slice(2)}-${periodo.slice(0, 2)}-01T00:00:00`);
         const ultimoDiaDelMesAnterior = new Date(primerDiaDelMes);
         ultimoDiaDelMesAnterior.setDate(0);
         
@@ -224,7 +225,7 @@ export const useFirestore = () => {
             setLoading((prev)=>({...prev, deleteData: true}));
             const docRef=doc(db,"empleados",nanoid);
             await deleteDoc(docRef);
-            setDataEmpleado(dataEmpleado.filter(item=>item.id !==nanoid));
+            setDataEmp(dataEmp.filter(item=>item.id !==nanoid));
         }catch(error){
             console.log('error al deletear');
         }finally{
@@ -242,30 +243,12 @@ export const useFirestore = () => {
         try{
             const xcategoria = categoryMappings[empleado.categoria];
             const fechaingreso=empleado.fechaingreso.toDate();
-            let fechaegreso='';
-            if(!isValidDate(empleado.fechaegreso)){
+            console.log('valor de feegreso:',new Date(empleado.fechaegreso).getFullYear());
+            let fechaegreso=new Date(empleado.fechaegreso).getFullYear();
+            if(fechaegreso===1969){
               fechaegreso=null;
-            }else{
-              fechaegreso=empleado.fechaegreso.toDate();
             }
             console.log('fechaegreso:',fechaegreso);
-            // let fechaeg=null;
-            // if(!isNaN(empleado.fechaegreso || empleado.fechaegreso!==null)){
-            //   console.log(empleado.fechaegreso," ",typeof(empleado.fechaegreso))
-            //   // const fechaegreso=new Date(empleado.fechaegreso+"T00:00:00");
-            //   let fechaegreso=new Date(empleado.fechaegreso);
-            //   console.log(fechaegreso.getFullYear(),'tipo: ',typeof(fechaegreso));
-            //   const year=fechaegreso.getFullYear();
-            //   const month = fechaegreso.getMonth() + 1;
-            //   const day = fechaegreso.getDate();
-            //   const hours = fechaegreso.getHours();
-            //   const minutes = fechaegreso.getMinutes();
-            //   const seconds = fechaegreso.getSeconds();
-            //   let fechaeg=`${year}-${month}-${day}+"T ${hours}:${minutes}:${seconds}`;  
-            //   console.log(`${year}-${month}-${day} ${hours}:${minutes}:${seconds}`);
-            // }else{
-            //   fechaegreso=null;
-            // }
 
             setLoading((prev)=> ({...prev, updateData: true}));
             const docRef=doc(db,"empleados",nanoid);

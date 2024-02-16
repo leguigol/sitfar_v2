@@ -56,26 +56,6 @@ const Eempleado = () => {
       } finally {
       }
     };
-
-
-    // useEffect(() => {
-    //   const fetchData = async () => {
-    //     try{
-    //       console.log('id en effect:',id)          
-    //       const empleadoData = await getDataEmpleadoById(id);
-    //       console.log('empleado Data useEffect:', empleadoData);
-    //     }catch(error){
-    //       console.log(error);
-    //     }
-    //   };
-    
-    //   fetchData();
-    // }, [id]);
-
-    // if(empleadoData){
-    //   setAuxEmp(empleadoData); 
-    // }
-
     
     const convertirTime=(time)=>{
       if (time && time.seconds) {
@@ -122,35 +102,9 @@ const Eempleado = () => {
       'Farmaceutico Art.7 C'
     ];
   
-    // const savedValues={
-    //   cuil: auxEmp.cuil,
-    //   apellido: auxEmp.apellido,
-    //   nombres: auxEmp.nombres,
-    //   categoria: categorias[auxEmp.categoria],
-    //   fechaingreso: dayjs(convertirTime(auxEmp.fecha_ingreso)),
-    //   fechaegreso: auxEmp.fecha_egreso===null ? null : dayjs(convertirTime(auxEmp.fecha_egreso)),
-    //   licencia: auxEmp.licencia,
-    //   reducida: auxEmp.reducida,
-    //   sindical: auxEmp.sindical
-    // };
-
     useEffect(() => {
       getDataEmpleadoById();
     }, []);
-
-    // const savedValues={
-    //   cuil: dataEmpleado.cuil,
-    //   apellido: dataEmpleado.apellido,
-    //   nombres: dataEmpleado.nombres,
-    //   categoria: categorias[dataEmpleado.categoria],
-    //   fechaingreso: null,
-    //   fechaegreso: null,
-    //   licencia: dataEmpleado.licencia,
-    //   reducida: dataEmpleado.reducida,
-    //   sindical: dataEmpleado.sindical
-    // };
-
-    // console.log('savedvalues:',savedValues)
 
     useEffect(() => {
       if (dataEmpleado) {
@@ -187,10 +141,6 @@ const Eempleado = () => {
       nombres: Yup.string().required("Nombres es requerido"),
       categoria: Yup.string().required("Categoria es requerida")
     })  
-        
-
-  
-  
 
   return (
 
@@ -204,9 +154,6 @@ const Eempleado = () => {
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb"> 
 
         <Formik
-          // initialValues={{ cuil: dataEmpleado.cuil, apellido: dataEmpleado.apellido, nombres: dataEmpleado.nombres, categoria: categoryMappings[dataEmpleado.categoria], fechaingreso: convertirTime(dataEmpleado.fecha_ingreso), fechaegreso: dataEmpleado.fecha_egreso===null ? null : dayjs(dataEmpleado.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado.licencia, reducida: dataEmpleado.reducida, sindical: dataEmpleado.sindical }}
-          // initialValues={{ cuil: dataEmp.cuil, apellido: dataEmp.apellido, nombres: dataEmp.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs(convertirTime(dataEmp.fecha_ingreso)), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
-          // initialValues={{ cuil: auxEmp.cuil, apellido: auxEmp.apellido, nombres: auxEmp.nombres, categoria: 0, fechaingreso: dayjs("2024-01-01"), fechaegreso: auxEmp.fecha_egreso===null ? null : dayjs(auxEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: auxEmp.licencia, reducida: auxEmp.reducida, sindical: auxEmp.sindical }}
           initialValues={formValues || initialValues}
           onSubmit={onSubmit}
           validationSchema={validationSchema}

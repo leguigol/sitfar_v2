@@ -18,15 +18,17 @@ import Swal from 'sweetalert2';
 const Empleados = () => {
 
     const {loading,dataEmpleado,setDataEmpleado,dataFarmacia,setDataFarmacia}=useUserContext()
-    const {getDataFarmacia,getDataEmpleados,deleteEmpleado,getDataEmpleadoById,dataFar,dataEmp,error}=useFirestore();
+    const {getDataFarmacia,dataEmp,getDataEmpleados,deleteEmpleado,getDataEmpleadoById,dataFar,error}=useFirestore();
 
     const navigate=useNavigate();
 
     useEffect(()=>{
-      getDataEmpleados(dataFarmacia.cuit);
+        getDataEmpleados();
     },[]);
 
     console.log('data farmacias en empleados: ',dataFarmacia.cuit)
+    console.log('dateEmp:',dataEmp);
+
     const categorias = [
       'Cadete',
       'Aprendiz/Ayudante',
@@ -58,11 +60,8 @@ const Empleados = () => {
               text: 'El empleado ha sido borrado',
               icon: 'success'
             });
-    
-            // Recarga la página después de eliminar el empleado
           } catch (error) {
             console.error('Error al borrar empleado:', error);
-            // Manejar el error según tus necesidades
           } finally {
             window.location.reload();
           }
@@ -73,9 +72,6 @@ const Empleados = () => {
     const handleUpdate=(id)=>{
       navigate(`/edit-empleado/${id}`);
     }
-
-    if (loading) return <p>Loading data....</p>
-    if (error) return <p>{error}</p>
 
     const formatDate = (timestamp) => {
       console.log(typeof(timestamp))

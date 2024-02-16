@@ -11,14 +11,20 @@ import { useUserContext } from '../context/UserContext';
 const Cuota = () => {
 
   const [periodo,setPeriodo]=useState('');
-  const { getDataEmpleadosxPeri,getSNR }=useFirestore();
+  const { getDataEmpleadosxPeri,getSNR,loading }=useFirestore();
   const { dataEmpleado }=useUserContext();
   const [copiedDataEmpleado, setCopiedDataEmpleado] = useState([]);
-  const [remuneracion, setRemuneracion] = useState(null);
-  const [cuotaSindical, setCuotaSindical] = useState(0);
+  const [remuneraciones, setRemuneraciones] = useState({});
+  const [cuotaSindicales, setCuotaSindicales] = useState({});
   const [snrData, setSnrData] = useState([]);
+  const [totales, setTotales] = useState({
+    remuneraciones: 0,
+    cuotasSindicales: 0,
+    totalSNRData: 0,
+  });
 
-    const onSubmit=async(values,{setSubmitting, errors,touched,setErrors})=>{
+
+  const onSubmit=async(values,{setSubmitting, errors,touched,setErrors})=>{
       console.log('values', values);
       const mes=values.periodo.slice(0,2);
       const ano=values.periodo.slice(2);
@@ -36,14 +42,8 @@ const Cuota = () => {
         Swal.fire("Error de formato de periodo!");
       }else{
         try{
-          setPeriodo(values.periodo);
           await getDataEmpleadosxPeri(values.periodo);
-          const newDataEmpleado = dataEmpleado.map((item) => ({
-            ...item,
-            remuneracion: 0,
-            sumasnr: 0,
-          }));
-          setCopiedDataEmpleado(newDataEmpleado);
+          setPeriodo(values.periodo);
         }catch(error){
           console.error("Error al obtener empleados por periodo", error);
         }finally{
@@ -91,30 +91,71 @@ const Cuota = () => {
       return amount.toFixed(2);
     };
 
-    const handleRemuneracionBlur = () => {
-      const cuota = remuneracion * 0.02;
-      setCuotaSindical(cuota);
-    };
+    const handleRemuneracionBlur = (cuil) => {
+      const cuota = remuneraciones[cuil] * 0.02;
+      setCuotaSindicales((prevCuotas)=>({
+        ...prevCuotas,
+        [cuil]: cuota,
+      }));
+    }
     
-    const handleRemuneracionChange = (e) => {
+    const handleRemuneracionChange = (e,cuil) => {
       console.log('entre')
       const inputValue = e.target.value === '' ? null : Number(e.target.value);
-      setRemuneracion(inputValue);
+      setRemuneraciones((prevRemuneraciones)=>({
+        ...prevRemuneraciones,
+        [cuil]: inputValue,
+      }));
       
-      const cuota = inputValue !== null ? inputValue * 0.02 : 0;
-      setCuotaSindical(cuota);
+      // const cuota = inputValue !== null ? inputValue * 0.02 : 0;
+      // setCuotaSindicales((prevCuotas)=>({
+      //   ...prevCuotas,
+      //   [cuil]: cuota,
+      // }));
     };
-      
+    
+    
+    useEffect(()=>{
+      if(periodo && dataEmpleado){
+        const newDataEmpleado = dataEmpleado.map((item) => ({
+          ...item,
+          remuneracion: 0,
+          sumasnr: 0,
+        }));
+        setCopiedDataEmpleado(newDataEmpleado);  
+      }
+
+    },[periodo]);
+
     useEffect(() => {
+
       const fetchData = async () => {
         const snrPromises = copiedDataEmpleado.map((item) => getSNR(periodo, item.categoria));
         const snrResults = await Promise.all(snrPromises);
         setSnrData(snrResults);
       };
-  
+
       fetchData();
+
     }, [copiedDataEmpleado]);
   
+    useEffect(()=>{
+      let remuneracionesTotal = 0;
+      let cuotasSindicalesTotal = 0;
+      let snrDataTotal = 0;
+
+      copiedDataEmpleado.forEach((item, index) => {
+        remuneracionesTotal += remuneraciones[item.cuil] || 0;
+        cuotasSindicalesTotal += cuotaSindicales[item.cuil] || 0;
+        snrDataTotal += snrData[index] || 0;
+      });
+
+      setTotales({
+        remuneraciones: remuneracionesTotal,
+        cuotasSindicales: cuotasSindicalesTotal,
+        totalSNRData: snrDataTotal,
+      });
+    },[remuneraciones])
 
     return (
 
@@ -168,8 +209,9 @@ const Cuota = () => {
                           <TableCell>Nombres</TableCell>
                           <TableCell>Categoría</TableCell>
                           <TableCell>Fecha de Ingreso</TableCell>
+                          <TableCell>Fecha de Egreso</TableCell>
                           <TableCell>Remuneración</TableCell>
-                          <TableCell>Cuota Sindical</TableCell>
+                          <TableCell>Cuota Sindical 2%</TableCell>
                           <TableCell>S.N.R.</TableCell>
                           <TableCell>Aporte 2% S.N.R.</TableCell>
                         </TableRow>
@@ -182,20 +224,27 @@ const Cuota = () => {
                             <TableCell>{item.nombres}</TableCell>
                             <TableCell>{categorias[item.categoria]}</TableCell>
                             <TableCell align="center">{formatDate(item.fecha_ingreso)}</TableCell>
+                            <TableCell align="center">{formatDate(item.fecha_egreso)}</TableCell>
                             <TableCell>
                               <Input
                                 type="number"
-                                value={remuneracion === null ? '' : remuneracion}
-                                onChange={handleRemuneracionChange}
-                                onBlur={handleRemuneracionBlur}
+                                value={remuneraciones[item.cuil] === undefined ? '' : remuneraciones[item.cuil]}
+                                onChange={(e)=>handleRemuneracionChange(e,item.cuil)}
+                                onBlur={()=>handleRemuneracionBlur(item.cuil)}
                               />
                             </TableCell>
-                            <TableCell>{formatCurrency(cuotaSindical)}</TableCell>
+                            {/* <TableCell>{cuotaSindicales[item.cuil]}</TableCell>
                             <TableCell>{snrData[index]}</TableCell>
-                            <TableCell>{formatCurrency(snrData[index] * 0.02)}</TableCell>
+                            <TableCell>{snrData[index] * 0.02}</TableCell> */}
                           </TableRow>
                         ))}
                       </TableBody>
+                      <TableRow>
+                        <TableCell colSpan={5} align="right">Totales:</TableCell>
+                        <TableCell>{formatCurrency(totales.remuneraciones)}</TableCell>
+                        <TableCell>{formatCurrency(totales.cuotasSindicales)}</TableCell>
+                        <TableCell>{formatCurrency(totales.totalSNRData)}</TableCell>
+                      </TableRow>
                     </Table>
                   </TableContainer>                    
                   )
