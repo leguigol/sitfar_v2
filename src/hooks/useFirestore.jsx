@@ -4,6 +4,9 @@ import { collection, getDocs, getDoc, query, where,doc,setDoc, Query, orderBy, l
 import { useUserContext } from '../context/UserContext';
 import { nanoid } from 'nanoid'
 
+import dayjs, { unix } from 'dayjs';
+import { Navigate } from 'react-router-dom';
+
 export const useFirestore = () => {
 
     const [dataFar,setDataFar]=useState([]);
@@ -77,13 +80,12 @@ export const useFirestore = () => {
         console.log("🚀 ~ getDataEmpleadoById ~ empleadoDoc:", empleadoDoc)
     
         if (empleadoDoc.exists()) {
-          console.log('Respuesta: EXISTE !!!');
           const empleadoData = {
             id: empleadoDoc.id,
             ...empleadoDoc.data(),
           };
           console.log('empleadoData:',empleadoData)
-          return(empleadoData);
+          setDataEmp(empleadoData);
         } else {
           console.log(`No existe un empleado con el ID ${empleadoId}`);
           setDataEmp(false);
@@ -211,7 +213,6 @@ export const useFirestore = () => {
 
             const docRef = doc(db,"empleados",newDoc.id);
             await setDoc(docRef,newDoc);
-            setDataEmpleado([...dataEmpleado, newDoc])
         }catch(error){
             console.log(error);
         }finally{
@@ -231,27 +232,55 @@ export const useFirestore = () => {
         }
     }
 
+    function isValidDate(date) {
+      // Verifica si date es una instancia de Date y si su valor de tiempo no es NaN
+      return date instanceof Date && !isNaN(date.getTime());
+    }
+
     const updateEmpleado=async(empleado,nanoid)=>{
         console.log('datos de empleado:',empleado,' nanoid:',nanoid)
         try{
             const xcategoria = categoryMappings[empleado.categoria];
-            const fechaingreso=empleado.fechaingreso+"T00:00:00";
-            const fechaegreso=empleado.fechaegreso+"T00:00:00";
+            const fechaingreso=empleado.fechaingreso.toDate();
+            let fechaegreso='';
+            if(!isValidDate(empleado.fechaegreso)){
+              fechaegreso=null;
+            }else{
+              fechaegreso=empleado.fechaegreso.toDate();
+            }
+            console.log('fechaegreso:',fechaegreso);
+            // let fechaeg=null;
+            // if(!isNaN(empleado.fechaegreso || empleado.fechaegreso!==null)){
+            //   console.log(empleado.fechaegreso," ",typeof(empleado.fechaegreso))
+            //   // const fechaegreso=new Date(empleado.fechaegreso+"T00:00:00");
+            //   let fechaegreso=new Date(empleado.fechaegreso);
+            //   console.log(fechaegreso.getFullYear(),'tipo: ',typeof(fechaegreso));
+            //   const year=fechaegreso.getFullYear();
+            //   const month = fechaegreso.getMonth() + 1;
+            //   const day = fechaegreso.getDate();
+            //   const hours = fechaegreso.getHours();
+            //   const minutes = fechaegreso.getMinutes();
+            //   const seconds = fechaegreso.getSeconds();
+            //   let fechaeg=`${year}-${month}-${day}+"T ${hours}:${minutes}:${seconds}`;  
+            //   console.log(`${year}-${month}-${day} ${hours}:${minutes}:${seconds}`);
+            // }else{
+            //   fechaegreso=null;
+            // }
 
             setLoading((prev)=> ({...prev, updateData: true}));
             const docRef=doc(db,"empleados",nanoid);
-                    await updateDoc(docRef, 
-                        {cuil: empleado.cuil,
-                        apellido: empleado.apellido.toUpperCase(),
-                        nombres: empleado.nombres.toUpperCase(),
-                        categoria: xcategoria,
-                        fecha_ingreso: new Date(fechaingreso),
-                        fecha_egreso: empleado.fechaegreso ? new Date(fechaegreso) : null,
-                        licencia: empleado.licencia,
-                        reducida: empleado.reducida,
-                        sindical: empleado.sindical
-                        }
-                    );
+            await updateDoc(docRef, 
+              {cuil: empleado.cuil,
+               apellido: empleado.apellido.toUpperCase(),
+               nombres: empleado.nombres.toUpperCase(),
+               categoria: xcategoria,
+               fecha_ingreso: fechaingreso,
+               fecha_egreso: fechaegreso===null ? null: fechaegreso,
+               licencia: empleado.licencia,
+               reducida: empleado.reducida,
+               sindical: empleado.sindical
+              }
+            );
         }catch(error){
             console.log("🚀 ~ updateEmpleado ~ error:", error)
             setError(error.message);

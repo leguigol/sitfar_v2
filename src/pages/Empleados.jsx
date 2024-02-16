@@ -51,12 +51,21 @@ const Empleados = () => {
         confirmButtonText: "Si, borrarlo !"
       }).then(async(result) => {
         if (result.isConfirmed) {
-          Swal.fire({
-            title: "Borrado!",
-            text: "El empleado ha sido borrado",
-            icon: "success"
-          });
-          await deleteEmpleado(id);
+          try {
+            await deleteEmpleado(id);
+            Swal.fire({
+              title: '¡Borrado!',
+              text: 'El empleado ha sido borrado',
+              icon: 'success'
+            });
+    
+            // Recarga la página después de eliminar el empleado
+          } catch (error) {
+            console.error('Error al borrar empleado:', error);
+            // Manejar el error según tus necesidades
+          } finally {
+            window.location.reload();
+          }
         }
       });
     }
@@ -69,6 +78,7 @@ const Empleados = () => {
     if (error) return <p>{error}</p>
 
     const formatDate = (timestamp) => {
+      console.log(typeof(timestamp))
       if (!timestamp) {
         return ''; // Manejar el caso de fecha nula si es necesario
       }

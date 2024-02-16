@@ -7,10 +7,10 @@ export const UserContext=createContext();
 const UserProvider=({children})=>{
 
     const savedDataFarmacia=JSON.parse(localStorage.getItem("dataFarmacia")) || [];
-    // const savedDataEmpleado=JSON.parse(localStorage.getItem("dataEmpleado")) || [];
+    const savedDataEmpleado=JSON.parse(localStorage.getItem("dataEmpleado")) || [];
 
     const [dataFarmacia,setDataFarmacia]=useState(savedDataFarmacia);
-    const [dataEmpleado,setDataEmpleado]=useState([]);
+    const [dataEmpleado,setDataEmpleado]=useState(savedDataEmpleado);
 
     const [user,setUser]=useState(false);
     const [loading,setLoading]=useState(false);
@@ -25,6 +25,7 @@ const UserProvider=({children})=>{
 
     useEffect(()=>{
         localStorage.setItem("dataFarmacia",JSON.stringify(dataFarmacia));
+        localStorage.setItem("dataEmpleado",JSON.stringify(dataEmpleado));
     }, [dataFarmacia]);
 
     if(user===false) return <p>Loading app....</p>

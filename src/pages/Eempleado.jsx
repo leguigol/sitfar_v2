@@ -6,6 +6,8 @@ import * as Yup from "yup";
 import { LoadingButton } from '@mui/lab';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {useFirestore} from '../hooks/useFirestore';
+import { db,auth } from '../config/firebase';
+import { collection, getDocs, getDoc, query, where,doc,setDoc, Query, orderBy, limit, addDoc, Timestamp, serverTimestamp, deleteDoc,updateDoc } from 'firebase/firestore';
 
 import dayjs, { unix } from 'dayjs';
 import 'dayjs/locale/en-gb';
@@ -22,38 +24,155 @@ import { useUserContext } from '../context/UserContext';
 const Eempleado = () => {
 
     const navigate=useNavigate();
-    const {updateEmpleado,dataEmp,getDataEmpleadoById}=useFirestore();
-    const {dataEmpleado}=useUserContext();
-    const [dataId, setDataId]=useState();
+    const {updateEmpleado}=useFirestore();
+    const {dataEmpleado,setDataEmpleado}=useUserContext();
+    // const [dataId, setDataId]=useState();
     const [auxEmp,setAuxEmp]=useState([]);
+    const [formValues,setFormValues]=useState(null);
 
     const { id }=useParams();
     console.log('id:',id)
 
-    useEffect(() => {
-      const fetchData = async () => {
-        try{
-          console.log('id en effect:',id)          
-          const empleadoData = await getDataEmpleadoById(id);
-          console.log('empleado Data useEffect:', empleadoData);
-          setAuxEmp(empleadoData); 
-        }catch(error){
-          console.log(error);
-        }
-      };
+    const getDataEmpleadoById = async () => {
+      try {
     
-      fetchData();
-    }, [id]);
+        const empleadoRef = doc(db, 'empleados', id);
+        const empleadoDoc = await getDoc(empleadoRef);
+        console.log("🚀 ~ getDataEmpleadoById ~ empleadoDoc:", empleadoDoc)
+    
+        if (empleadoDoc.exists()) {
+          const empleadoData = {
+            id: empleadoDoc.id,
+            ...empleadoDoc.data(),
+          };
+          console.log('empleadoData:',empleadoData)
+          setDataEmpleado(empleadoData);
+        } else {
+          console.log(`No existe un empleado con el ID ${empleadoId}`);
+          setDataEmpleado(false);
+        }
+      } catch (error) {
+        console.error('Error al recuperar empleado por ID:', error);
+      } finally {
+      }
+    };
+
+
+    // useEffect(() => {
+    //   const fetchData = async () => {
+    //     try{
+    //       console.log('id en effect:',id)          
+    //       const empleadoData = await getDataEmpleadoById(id);
+    //       console.log('empleado Data useEffect:', empleadoData);
+    //     }catch(error){
+    //       console.log(error);
+    //     }
+    //   };
+    
+    //   fetchData();
+    // }, [id]);
+
+    // if(empleadoData){
+    //   setAuxEmp(empleadoData); 
+    // }
+
+    
+    const convertirTime=(time)=>{
+      if (time && time.seconds) {
+        const unixTimestamp = time.seconds;
+        const date = new Date(unixTimestamp * 1000);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+    
+        console.log(`${year}-${month}-${day} ${hours}:${minutes}:${seconds}`);
+    
+        return `${year}-${month}-${day}`;
+      } else {
+        console.error("Invalid or undefined 'time' object:", time);
+        return ''; // or handle the error in an appropriate way
+      }
+    }
+  
+    const initialValues={
+      cuil: '',
+      apellido: '',
+      nombres: '',
+      categoria: 'Personal en gestion',
+      fechaingreso: '',
+      fechaegreso: '',
+      licencia: '',
+      reducida: '',
+      sindical: ''
+
+    };
+
+    const categorias = [
+      'Cadete',
+      'Aprendiz/Ayudante',
+      'Personal auxiliar ',
+      'Personal con asignacion',
+      'Ayudante en gestion',
+      'Personal en gestion',
+      'Farmaceutico Art.7 A',
+      'Farmaceutico Art.7 B',
+      'Farmaceutico Art.7 C'
+    ];
+  
+    // const savedValues={
+    //   cuil: auxEmp.cuil,
+    //   apellido: auxEmp.apellido,
+    //   nombres: auxEmp.nombres,
+    //   categoria: categorias[auxEmp.categoria],
+    //   fechaingreso: dayjs(convertirTime(auxEmp.fecha_ingreso)),
+    //   fechaegreso: auxEmp.fecha_egreso===null ? null : dayjs(convertirTime(auxEmp.fecha_egreso)),
+    //   licencia: auxEmp.licencia,
+    //   reducida: auxEmp.reducida,
+    //   sindical: auxEmp.sindical
+    // };
 
     useEffect(() => {
-      console.log('auxEmp: ', auxEmp.cuil, 'tipo: ',(typeof(auxEmp.cuil)));
-    }, [auxEmp]);
+      getDataEmpleadoById();
+    }, []);
 
+    // const savedValues={
+    //   cuil: dataEmpleado.cuil,
+    //   apellido: dataEmpleado.apellido,
+    //   nombres: dataEmpleado.nombres,
+    //   categoria: categorias[dataEmpleado.categoria],
+    //   fechaingreso: null,
+    //   fechaegreso: null,
+    //   licencia: dataEmpleado.licencia,
+    //   reducida: dataEmpleado.reducida,
+    //   sindical: dataEmpleado.sindical
+    // };
+
+    // console.log('savedvalues:',savedValues)
+
+    useEffect(() => {
+      if (dataEmpleado) {
+        const savedValues = {
+          cuil: dataEmpleado.cuil,
+          apellido: dataEmpleado.apellido,
+          nombres: dataEmpleado.nombres,
+          categoria: categorias[dataEmpleado.categoria],
+          fechaingreso: dayjs(convertirTime(dataEmpleado.fecha_ingreso)),
+          fechaegreso: dataEmpleado.fecha_egreso===null ? null : dayjs(convertirTime(dataEmpleado.fecha_egreso)),
+          licencia: dataEmpleado.licencia,
+          reducida: dataEmpleado.reducida,
+          sindical: dataEmpleado.sindical
+        };
+        setFormValues(savedValues);
+      }
+    }, [dataEmpleado]);
+
+    console.log(formValues);
     const onSubmit=async(values,{setSubmitting, setErrors})=>{
-        console.log('submit',values)
         try{
-            console.log('values: ',values);
-            await updateEmpleado(values,dataId);
+            await updateEmpleado(values,id);
             navigate('/empleados');
         }catch(error){
           console.log(error);
@@ -62,45 +181,16 @@ const Eempleado = () => {
         }    
     }
     
-        const validationSchema=Yup.object().shape({
-            cuil: Yup.string().matches(/^\d{11}$/, 'El CUIL debe tener exactamente 11 dígitos numéricos').required("Cuil requerido"),
-            apellido: Yup.string().required("Apellido es requerido"),
-            nombres: Yup.string().required("Nombres es requerido"),
-            categoria: Yup.string().required("Categoria es requerida")
-        })  
+    const validationSchema=Yup.object().shape({
+      cuil: Yup.string().matches(/^\d{11}$/, 'El CUIL debe tener exactamente 11 dígitos numéricos').required("Cuil requerido"),
+      apellido: Yup.string().required("Apellido es requerido"),
+      nombres: Yup.string().required("Nombres es requerido"),
+      categoria: Yup.string().required("Categoria es requerida")
+    })  
         
 
-  const categorias = [
-    'Cadete',
-    'Aprendiz/Ayudante',
-    'Personal auxiliar ',
-    'Personal con asignacion',
-    'Ayudante en gestion',
-    'Personal en gestion',
-    'Farmaceutico Art.7 A',
-    'Farmaceutico Art.7 B',
-    'Farmaceutico Art.7 C'
-  ];
   
-
-  // const convertirTime=(time)=>{
-  //   console.log(typeof time);
-  //   const unixTimestamp = time.seconds; 
-
-  //   // const date = new Date(unixTimestamp * 1000); // Convert Unix timestamp to milliseconds
   
-  //   // // Get the various components of the date
-  //   // const year = date.getFullYear();
-  //   // const month = date.getMonth() + 1; // Month is 0-indexed, so we add 1
-  //   // const day = date.getDate();
-  //   // const hours = date.getHours();
-  //   // const minutes = date.getMinutes();
-  //   // const seconds = date.getSeconds(); 
-
-  //   // console.log(`${year}-${month}-${day} ${hours}-${minutes}-${seconds}`);
-
-  //   // return `${year}-${month}-${day}`
-  // }
 
   return (
 
@@ -117,16 +207,15 @@ const Eempleado = () => {
           // initialValues={{ cuil: dataEmpleado.cuil, apellido: dataEmpleado.apellido, nombres: dataEmpleado.nombres, categoria: categoryMappings[dataEmpleado.categoria], fechaingreso: convertirTime(dataEmpleado.fecha_ingreso), fechaegreso: dataEmpleado.fecha_egreso===null ? null : dayjs(dataEmpleado.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmpleado.licencia, reducida: dataEmpleado.reducida, sindical: dataEmpleado.sindical }}
           // initialValues={{ cuil: dataEmp.cuil, apellido: dataEmp.apellido, nombres: dataEmp.nombres, categoria: categoryMappings[dataEmp.categoria], fechaingreso: dayjs(convertirTime(dataEmp.fecha_ingreso)), fechaegreso: dataEmp.fecha_egreso===null ? null : dayjs(dataEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: dataEmp.licencia, reducida: dataEmp.reducida, sindical: dataEmp.sindical }}
           // initialValues={{ cuil: auxEmp.cuil, apellido: auxEmp.apellido, nombres: auxEmp.nombres, categoria: 0, fechaingreso: dayjs("2024-01-01"), fechaegreso: auxEmp.fecha_egreso===null ? null : dayjs(auxEmp.fecha_egreso).format('YYYY-MM-DD'), licencia: auxEmp.licencia, reducida: auxEmp.reducida, sindical: auxEmp.sindical }}
-          initialValues={{ cuil: auxEmp.cuil }}
+          initialValues={formValues || initialValues}
           onSubmit={onSubmit}
           validationSchema={validationSchema}
+          enableReinitialize
         >
           {
             
-            ({values, handleSubmit,handleChange,errors,touched,handleBlur,isSubmitting})=>(
-              // <form onSubmit={handleSubmit}>
+            ({values, handleSubmit,handleChange,errors,touched,handleBlur,isSubmitting,setFieldValue})=>(
               <Box onSubmit={handleSubmit} sx={{mt:1}} component="form">
-
                 <TextField
                   placeholder='cuil' 
                   value={values.cuil} 
@@ -141,9 +230,6 @@ const Eempleado = () => {
                   helperText={errors.cuil && touched.cuil && errors.cuil}
                 />
                 <TextField
-                  value={auxEmp.cuil}
-                />
-                {/* <TextField
                   placeholder='apellido' 
                   value={values.apellido} 
                   onChange={handleChange}
@@ -169,7 +255,7 @@ const Eempleado = () => {
                   error={errors.nombres && touched.nombres}
                   helperText={errors.nombres && touched.nombres && errors.nombres}
                 />
-                {/* <FormControl fullWidth>
+                <FormControl fullWidth>
                     <InputLabel id="demo-simple-select-label">Categoria</InputLabel>
                     <Select
                         labelId="categoria-label"
@@ -183,20 +269,14 @@ const Eempleado = () => {
                         error={errors.categoria && touched.categoria}
                         autoWidth
                     >
-                        <MenuItem>
-                        {
-                            categorias.map((category) => {
-                            <MenuItem>{category}</MenuItem>
-                        })
-                        }                        
-                        </MenuItem>
+                      {categorias.map((category) => (
+                       <MenuItem key={category} value={category} selected={values.categoria===category}>
+                         {category}
+                       </MenuItem>
+                      ))}
                     </Select>
                 </FormControl>
-                <TextField 
-                  value={values.categoria}  
-                /> */}
-
-                {/* <Stack>
+                <Stack>
                   <Field 
                       sx={{ mb: 3}}
                       component={DesktopDatePicker}
@@ -213,15 +293,16 @@ const Eempleado = () => {
                       name="fechaegreso"
                       label="fecha de egreso"
                       value={values.fechaegreso===null ? null : dayjs(values.fechaegreso)} // Asegúrate de que el valor sea un objeto Date
-                      onChange={(date) => setFieldValue('fechaegreso', dayjs(date).format('YYYY-MM-DD'))}
+                      onChange={(date) => setFieldValue('fechaegreso', date)}
                   />
                 </Stack>  
-
+ 
                 <FormGroup>
-                  <FormControlLabel control={<Checkbox checked={values.licencia} onChange={handleChange} name="licencia"/>} label="En licencia" />
+                  <FormControlLabel control={<Checkbox checked={values.licencia} onChange={handleChange} name="licencia" />} label="En licencia" />
                   <FormControlLabel control={<Checkbox checked={values.reducida} onChange={handleChange} name="reducida"/>} label="Jornada reducida" />
                   <FormControlLabel control={<Checkbox checked={values.sindical} onChange={handleChange} name="sindical"/>} label="Sindical " />
-                </FormGroup>   */} 
+                </FormGroup>     
+
                 <LoadingButton
                   type="submit"
                   disabled={isSubmitting} 
