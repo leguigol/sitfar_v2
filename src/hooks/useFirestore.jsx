@@ -244,10 +244,12 @@ export const useFirestore = () => {
             const xcategoria = categoryMappings[empleado.categoria];
             const fechaingreso=empleado.fechaingreso.toDate();
             console.log('valor de feegreso:',new Date(empleado.fechaegreso).getFullYear());
-            let fechaegreso=new Date(empleado.fechaegreso).getFullYear();
-            if(fechaegreso===1969){
+            let fechae=new Date(empleado.fechaegreso).getFullYear();
+            let fechaegreso;
+            if(fechae===1969){
               fechaegreso=null;
-            }
+            }else
+              fechaegreso=empleado.fechaegreso.toDate();
             console.log('fechaegreso:',fechaegreso);
 
             setLoading((prev)=> ({...prev, updateData: true}));

@@ -20,6 +20,7 @@ const UserProvider=({children})=>{
             //console.log(user);
             setUser(user);
         })
+        setDataFarmacia([]);
         return unsuscribe;
     },[]);
 
