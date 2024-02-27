@@ -20,14 +20,16 @@ const UserProvider=({children})=>{
             //console.log(user);
             setUser(user);
         })
-        setDataFarmacia([]);
         return unsuscribe;
     },[]);
 
     useEffect(()=>{
         localStorage.setItem("dataFarmacia",JSON.stringify(dataFarmacia));
-        localStorage.setItem("dataEmpleado",JSON.stringify(dataEmpleado));
     }, [dataFarmacia]);
+
+    useEffect(()=>{
+        localStorage.setItem("dataEmpleado",JSON.stringify(dataEmpleado));
+    }, [dataEmpleado]);
 
     if(user===false) return <p>Loading app....</p>
 

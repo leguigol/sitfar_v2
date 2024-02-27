@@ -7,7 +7,7 @@ import { useFirestore } from "../hooks/useFirestore";
 
 const Dashboard = () => {
 
-    const { dataFarmacia,setUser }=useUserContext();
+    const { dataFarmacia,setDataFarmacia,dataEmpleado,setDataEmpleado }=useUserContext();
     const { dataFar,getDataFarmacia,loading,error   }=useFirestore();
 
     const navigate = useNavigate();
@@ -23,6 +23,9 @@ const Dashboard = () => {
     const handleLogout=async()=>{
         try{
             await logout();
+            setDataFarmacia([]);
+            setDataEmpleado([]);
+
         }catch(error){
             console.log(error);
         }

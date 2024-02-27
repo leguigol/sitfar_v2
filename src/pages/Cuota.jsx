@@ -1,4 +1,4 @@
-import { Avatar, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Input } from '@mui/material'
+import { Avatar, FormHelperText, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Input,Checkbox } from '@mui/material'
 import React, { useContext, useEffect, useState } from 'react'
 import CalculateIcon from '@mui/icons-material/Calculate';
 import { Formik } from 'formik';
@@ -17,6 +17,9 @@ const Cuota = () => {
   const [remuneraciones, setRemuneraciones] = useState([]);
   const [cuotaSindicales, setCuotaSindicales] = useState({});
   const [snrData, setSnrData] = useState([]);
+  const [imprimirBoletaHabilitado, setImprimirBoletaHabilitado] = useState(false);
+  const [erroresValidacion, setErroresValidacion] = useState([]);
+
   const [totales, setTotales] = useState({
     remuneraciones: 0,
     cuotasSindicales: 0,
@@ -25,7 +28,7 @@ const Cuota = () => {
 
 
   const onSubmit=async(values,{setSubmitting, errors,touched,setErrors})=>{
-      console.log('values', values);
+      //console.log('values', values);
       const mes=values.periodo.slice(0,2);
       const ano=values.periodo.slice(2);
       let Validation=true;
@@ -44,6 +47,16 @@ const Cuota = () => {
         try{
           await getDataEmpleadosxPeri(values.periodo);
           setPeriodo(values.periodo);
+          if(dataEmpleado.length>0){
+            const newDataEmpleado = dataEmpleado.map((item) => ({
+             ...item,
+             remuneracion: 0,
+             sumasnr: 0,
+            }));
+            setCopiedDataEmpleado(newDataEmpleado);  
+          }
+
+          // tota();
         }catch(error){
           console.error("Error al obtener empleados por periodo", error);
         }finally{
@@ -114,16 +127,7 @@ const Cuota = () => {
       }));
     };
     
-    
-    useEffect(()=>{
-      if(periodo && dataEmpleado){
-        const newDataEmpleado = dataEmpleado.map((item) => ({
-          ...item,
-          remuneracion: 0,
-          sumasnr: 0,
-        }));
-        setCopiedDataEmpleado(newDataEmpleado);  
-      }
+    const tota=()=>{
       let remuneracionesTotal = 0;
       let cuotasSindicalesTotal = 0;
       let snrDataTotal = 0;
@@ -131,7 +135,7 @@ const Cuota = () => {
       copiedDataEmpleado.forEach((item, index) => {
         remuneracionesTotal += remuneraciones[item.cuil] || 0;
         cuotasSindicalesTotal += cuotaSindicales[item.cuil] || 0;
-        snrDataTotal += snrData[index]*0.02 || 0;
+        snrDataTotal += item.sumasnr || 0;
         console.log(snrDataTotal);
       });
 
@@ -141,44 +145,94 @@ const Cuota = () => {
         totalSNRData: snrDataTotal,
       });
 
-
-    },[periodo]);
-
+    }
+    
+    
     useEffect(() => {
 
       const fetchData = async () => {
         const snrPromises = copiedDataEmpleado.map((item) => getSNR(periodo, item.categoria));
         const snrResults = await Promise.all(snrPromises);
         setSnrData(snrResults);
+        console.log('snrdata:',snrData);
+        
       };
 
       fetchData();
 
-    }, [copiedDataEmpleado]);
-  
+    }, [periodo]);
+
     useEffect(()=>{
-      let remuneracionesTotal = 0;
-      let cuotasSindicalesTotal = 0;
-      let snrDataTotal = 0;
-      // setSnrData(0);
+      if (snrData[0]===0) {
+        Swal.fire({
+          title: "¡Atención!",
+          text: "No se encontraron datos de S.N.R. para el período seleccionado.",
+          icon: "warning",
+          confirmButtonText: "Comuniquese con el administrador del sistema",
+        });
+      }  
+
+      const newDataEmpleado = dataEmpleado.map((item,index) => ({
+        ...item,
+        remuneracion: 0,
+        sumasnr: item.licencia ? 0 : parseFloat(snrData[index]*0.02),
+      }));
+      
+      setCopiedDataEmpleado(newDataEmpleado);  
+      console.log('useEffect de periodo:',newDataEmpleado);
+      tota();
+
+    },[snrData]);
+  
+    useEffect(() => {
+      const habilitado = validarDatos();
+
+      setImprimirBoletaHabilitado(habilitado);
+      tota();
+    }, [remuneraciones,copiedDataEmpleado]);
+
+    const validarDatos = () => {
+      const errores = [];
+      let totsnr=0;
 
       copiedDataEmpleado.forEach((item, index) => {
-        remuneracionesTotal += remuneraciones[item.cuil] || 0;
-        cuotasSindicalesTotal += cuotaSindicales[item.cuil] || 0;
-        snrDataTotal += snrData[index]*0.02 || 0;
-        console.log(snrDataTotal);
+        if ((parseInt(remuneraciones[item.cuil]) === 0 || remuneraciones[item.cuil]===undefined || remuneraciones[item.cuil]===null) && item.sindical &&!item.licencia) {
+          errores.push({
+            campo: "remuneracion",
+            cuil: item.cuil,
+            mensaje: "Remuneración no puede ser cero si es Sindical",
+          });
+        }
+    
+        // Validación para checkbox Licencia y Remuneración/S.N.R.
+        if (item.licencia) {
+          if (remuneraciones[item.cuil] !== 0) {
+            errores.push({
+              campo: "remuneracion",
+              cuil: item.cuil,
+              mensaje: "Remuneración debe ser cero si Licencia está marcado",
+            });
+          }
+          if (item.sumasnr !== 0) {
+            errores.push({
+              campo: "snrData",
+              cuil: item.cuil,
+              mensaje: "S.N.R. debe ser cero si Licencia está marcado",
+            });
+          }
+        }
+        totsnr+=snrData[index];
+
       });
 
-      setTotales({
-        remuneraciones: remuneracionesTotal,
-        cuotasSindicales: cuotasSindicalesTotal,
-        totalSNRData: snrDataTotal,
-      });
-    },[remuneraciones])
+      setErroresValidacion(errores);
+      console.log('errores validacion',erroresValidacion)
+      return errores.length === 0;
+    };
 
     return (
 
-    <Box sx={{mt: 4, maxWidth: "1200px", mx: "auto", textAlign: "center"}}>
+    <Box sx={{mt: 4, maxWidth: "1400px", mx: "auto", textAlign: "center", overflow: "scroll"}}>
       <Avatar sx={{mx: "auto", bgcolor: "#111"}}>
         <CalculateIcon />
       </Avatar>
@@ -229,21 +283,33 @@ const Cuota = () => {
                           <TableCell>Categoría</TableCell>
                           <TableCell>Fecha de Ingreso</TableCell>
                           <TableCell>Fecha de Egreso</TableCell>
+                          <TableCell>Lic.</TableCell>
+                          <TableCell>Red.</TableCell>
+                          <TableCell>Sind.</TableCell>
                           <TableCell>Remuneración</TableCell>
                           <TableCell>Cuota Sindical 2%</TableCell>
                           <TableCell>S.N.R.</TableCell>
                           <TableCell>Aporte 2% S.N.R.</TableCell>
                         </TableRow>
                       </TableHead>
-                      <TableBody>
-                        {copiedDataEmpleado.map((item, index) => (
-                          <TableRow key={index}>
+                      { copiedDataEmpleado.map((item, index) => (
+                      <TableBody key={index}>
+                          <TableRow>
                             <TableCell>{item.cuil}</TableCell>
                             <TableCell>{item.apellido}</TableCell>
                             <TableCell>{item.nombres}</TableCell>
                             <TableCell>{categorias[item.categoria]}</TableCell>
                             <TableCell align="center">{formatDate(item.fecha_ingreso)}</TableCell>
                             <TableCell align="center">{formatDate(item.fecha_egreso)}</TableCell>
+                            <TableCell align="center">
+                              <Checkbox checked={item.licencia} />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Checkbox checked={item.reducida} />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Checkbox checked={item.sindical} />
+                            </TableCell>
                             <TableCell>
                               <Input
                                 type="number"
@@ -251,31 +317,34 @@ const Cuota = () => {
                                 onChange={(e)=>handleRemuneracionChange(e,item.cuil)}
                                 onBlur={()=>handleRemuneracionBlur(item.cuil)}
                               />
+
+                              {erroresValidacion.find(error => error.campo === "remuneracion" && error.cuil === item.cuil) && (
+                               <FormHelperText error>{erroresValidacion.find(error => error.campo === "remuneracion" && error.cuil === item.cuil).mensaje}</FormHelperText>
+                              )}
                             </TableCell>
+
                             <TableCell>{cuotaSindicales[item.cuil] ? (cuotaSindicales[item.cuil]).toFixed(2): 0}</TableCell>
                             <TableCell>{snrData[index]}</TableCell>
-                            <TableCell>{(snrData[index] * 0.02).toFixed(2)}</TableCell>
+                            <TableCell>{(item.sumasnr).toFixed(2)}</TableCell>
                           </TableRow>
-                        ))}
+                          
                       </TableBody>
-                      <TableRow>
-
-                      </TableRow>
+                        ))}
                       <TableHead>
                         <TableRow>
-                          <TableCell colspan={2}>Total Remuneraciones: $</TableCell>
+                          <TableCell colSpan={2}>Total Remuneraciones: $</TableCell>
                           <TableCell>{(totales.remuneraciones.toFixed(2))}</TableCell>
                           <TableCell></TableCell>
-                          <TableCell colspan={2}>Total Cuota Sindical $</TableCell>
+                          <TableCell colSpan={2}>Total Cuota Sindical $</TableCell>
                           <TableCell>{(totales.cuotasSindicales.toFixed(2))}</TableCell>
                           <TableCell></TableCell>
-                          <TableCell colspan={1}>Total S.N.R. </TableCell>
+                          <TableCell colSpan={2}>Total S.N.R. </TableCell>
                           <TableCell>{(totales.totalSNRData).toFixed(2)}</TableCell>
                           <TableCell></TableCell>
                           <TableCell></TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell colspan={2}>Total a Pagar: $</TableCell>
+                          <TableCell colSpan={2}>Total a Pagar: $</TableCell>
                           <TableCell>{(totales.cuotasSindicales+totales.totalSNRData).toFixed(2)}</TableCell>
                           <TableCell></TableCell>
                         </TableRow>
@@ -285,6 +354,14 @@ const Cuota = () => {
                   </TableContainer>                    
                   )
                 }
+                <LoadingButton
+                  type="submit"
+                  disabled={!imprimirBoletaHabilitado || totales.totalSNRData===0}
+                  loading={isSubmitting}
+                  variant='contained'
+                  fullWidth
+                  sx={{ mb: 1 }}
+                >IMPRIMIR BOLETA</LoadingButton>  
 
               </Box>
             )}           

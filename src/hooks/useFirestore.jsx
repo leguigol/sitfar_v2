@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { db,auth } from '../config/firebase';
-import { collection, getDocs, getDoc, query, where,doc,setDoc, Query, orderBy, limit, addDoc, Timestamp, serverTimestamp, deleteDoc,updateDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, query, where,doc,setDoc, serverTimestamp, deleteDoc,updateDoc, or, and } from 'firebase/firestore';
 import { useUserContext } from '../context/UserContext';
 import { nanoid } from 'nanoid'
 
@@ -100,35 +100,59 @@ export const useFirestore = () => {
     };
     
     const getDataEmpleadosxPeri = async (periodo) => {
-        console.log('periodo en xperi:',periodo)
+//        console.log('periodo en xperi:',periodo)
         try {
           setLoading((prev) => ({ ...prev, getDataE: true }));
       
           const cuit = dataFarmacia.cuit;
           const dataRef = collection(db, "empleados");
             
-        //   const primerDiaDelMes = new Date(`${periodo.slice(2)}-${periodo.slice(0, 2)}-01T00:00:00`);
-        //   const ultimoDiaDelMesAnterior = new Date(primerDiaDelMes);
-        //   ultimoDiaDelMesAnterior.setDate(ultimoDiaDelMesAnterior.getDate() - 1);
-
         const primerDiaDelMes = new Date(`20${periodo.slice(2)}-${periodo.slice(0, 2)}-01T00:00:00`);
-        const ultimoDiaDelMesAnterior = new Date(primerDiaDelMes);
-        ultimoDiaDelMesAnterior.setDate(0);
-        
-        console.log('primer dia: ',primerDiaDelMes);
-          console.log('ultimo dia: ',ultimoDiaDelMesAnterior);
+        const year=`20${periodo.slice(2)}`
+        const month=parseInt(periodo.slice(0, 2))
+        const ultimo=getLastDayOfMonth(year, month);
+        const ultimoDiaDelMes = new Date(`20${periodo.slice(2)}-${periodo.slice(0, 2)}-${ultimo}T00:00:00`);
+                
+  //      console.log('primer dia: ',primerDiaDelMes);
+  //      console.log('ultimo dia: ',ultimoDiaDelMes);
 
           const q = query(
             dataRef,
-            where("cuit", "==", cuit),
-            where("fecha_ingreso", "<=", primerDiaDelMes)
+                where("cuit", "==", cuit),
           );
       
           const querySnapshot = await getDocs(q);
           const dataDB = querySnapshot.docs.map((doc) => doc.data());
+//          console.log('dataDB:',dataDB)
+          const dataDBFiltrado = [];
+          dataDB.forEach((empleado) => {
+//            console.log('empleado fecha_ingreso',empleado.fecha_ingreso, "tipo: ",typeof(empleado.fecha_ingreso))
+//            console.log('primediadelmes',primerDiaDelMes, "tipo: ",typeof(primerDiaDelMes))
+
+//            console.log('empleado fecha_egreso',empleado.fecha_egreso, "tipo: ",typeof(empleado.fecha_egreso))
+//            console.log('ultimodiadelmes',ultimoDiaDelMes, "tipo: ",typeof(ultimoDiaDelMes))
+            const fechaIngresoDate = empleado.fecha_ingreso.toDate();
+            let fechaEgresoDate='';
+            if(empleado.fecha_egreso!==null){
+               fechaEgresoDate = empleado.fecha_egreso.toDate();
+            }
+
+            if (fechaIngresoDate <= primerDiaDelMes) {
+              if(fechaEgresoDate!==''){
+                if (fechaEgresoDate <= ultimoDiaDelMes) {
+                  dataDBFiltrado.push(empleado);
+                }  
+              }else{
+                dataDBFiltrado.push(empleado);
+              }
+  
+            }
+          });
+
+          setDataEmpleado(dataDBFiltrado);
       
-          console.log("data db empleados por periodo:", dataDB);
-          setDataEmpleado(dataDB);
+          // console.log("data db empleados por periodo:", dataDB);
+          // setDataEmpleado(dataDB);
         } catch (error) {
           console.error("error retriving empleados por periodo", error);
           setError(error.message);
@@ -136,9 +160,15 @@ export const useFirestore = () => {
           setLoading((prev) => ({ ...prev, getDataE: false }));
         }
     };
-      
+    
+    function getLastDayOfMonth(year, month) {
+      const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+    
+      return lastDayOfMonth;
+    }
+    
     const getSNR = async (periodo, categoria) => {
-        console.log('periodo: ',periodo, ' y categoria: ',categoria);
+ //       console.log('periodo: ',periodo, ' y categoria: ',categoria);
         try {
           const dataRef = collection(db, 'sumas_snr'); 
       
@@ -150,7 +180,7 @@ export const useFirestore = () => {
             return querySnapshot.docs[0].data().snr;
           } else {
             console.log('No se encontraron documentos para el periodo y la categoría especificados');
-            return null; 
+            return 0; 
           }
         } catch (error) {
           console.error('Error al obtener el documento:', error);
