@@ -12,7 +12,7 @@ import InputLabel from '@mui/material/InputLabel';
 const Cuota = () => {
 
   const [periodo,setPeriodo]=useState('');
-  const { getDataEmpleadosxPeri,getSNR,loading }=useFirestore();
+  const { getDataEmpleadosxPeri,getSNR,loading,addCuotaCab,incrementarContadorBoleta}=useFirestore();
   const { dataEmpleado }=useUserContext();
   const [copiedDataEmpleado, setCopiedDataEmpleado] = useState([]);
   const [remuneraciones, setRemuneraciones] = useState([]);
@@ -20,7 +20,7 @@ const Cuota = () => {
   const [snrData, setSnrData] = useState([]);
   const [imprimirBoletaHabilitado, setImprimirBoletaHabilitado] = useState(false);
   const [erroresValidacion, setErroresValidacion] = useState([]);
-  const [medioPago, setMedioPago]=useState('');
+  const [medioPago, setMedioPago]=useState('TR');
 
   const [totales, setTotales] = useState({
     remuneraciones: 0,
@@ -123,7 +123,7 @@ const Cuota = () => {
         [cuil]: inputValue,
       }));
       
-      const cuota = inputValue !== null ? inputValue * 0.02 : 0;
+      const cuota = inputValue !== null && inputValue >= 0 ? inputValue * 0.02 : 0;
       setCuotaSindicales((prevCuotas)=>({
         ...prevCuotas,
         [cuil]: cuota,
@@ -200,21 +200,14 @@ const Cuota = () => {
       let totsnr=0;
 
       copiedDataEmpleado.forEach((item, index) => {
-        console.log('float:',parseFloat(remuneraciones[item.cuil]))
-        if ((parseFloat(remuneraciones[item.cuil]) === 0 || remuneraciones[item.cuil]===undefined || remuneraciones[item.cuil]===null) && item.sindical &&!item.licencia) {
+        console.log('float:',item);
+        if ((parseFloat(remuneraciones[item.cuil]) <= 0 || remuneraciones[item.cuil]===undefined || remuneraciones[item.cuil]===null) && item.sindical &&!item.licencia) {
           errores.push({
             campo: "remuneracion",
             cuil: item.cuil,
-            mensaje: "Remuneración no puede ser cero si es Sindical",
+            mensaje: "Remuneración no puede ser cero o negativa si es Sindical",
           });
         }
-        if (parseFloat(remuneraciones[item.cuil]<0)){
-          errores.push({
-            campo: "remuneracion",
-            cuil: item.cuil,
-            mensaje: "Remuneración no puede ser menor a cero",
-          });
-        };
 
         // Validación para checkbox Licencia y Remuneración/S.N.R.
         if (item.licencia) {
@@ -245,8 +238,28 @@ const Cuota = () => {
     const handleChange2 = (event) => {
       setMedioPago(event.target.value);
     };
-    return (
 
+    const generarBoleta = async () => {
+      try {
+
+        console.log('generarBoleta',totales.remuneraciones);
+        // Lógica para grabar en cuota_cab
+        const contador=incrementarContadorBoleta();
+
+        console.log('boleta nro: ',contador);
+    
+        // Lógica para grabar en cuota_det
+        // ...
+    
+        // Resto de la lógica de generación de boletas
+      } catch (error) {
+        console.error("Error al generar la boleta", error);
+        // Manejar el error, mostrar un mensaje, etc.
+      }
+    };
+
+    return (
+    
     <Box sx={{mt: 4, maxWidth: "1400px", mx: "auto", textAlign: "center", overflow: "scroll"}}>
       <Avatar sx={{mx: "auto", bgcolor: "#111"}}>
         <CalculateIcon />
@@ -287,7 +300,7 @@ const Cuota = () => {
                 >Generar</LoadingButton>  
 
                 {
-                  periodo && (
+                  periodo &&  (
                     <TableContainer component={Paper}>
                     <Table>
                       <TableHead>
@@ -389,8 +402,9 @@ const Cuota = () => {
                   loading={isSubmitting}
                   variant='contained'
                   fullWidth
+                  onClick={generarBoleta}
                   sx={{ mb: 1 }}
-                >IMPRIMIR BOLETA</LoadingButton>  
+                >GENERAR E IMPRIMIR BOLETA</LoadingButton>  
 
               </Box>
             )}           

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { db,auth } from '../config/firebase';
-import { collection, getDocs, getDoc, query, where,doc,setDoc, serverTimestamp, deleteDoc,updateDoc, or, and } from 'firebase/firestore';
+import { collection, getDocs, getDoc, query, where,doc,setDoc, serverTimestamp, deleteDoc,updateDoc, or, and,getFirestore,runTransaction } from 'firebase/firestore';
 import { useUserContext } from '../context/UserContext';
 import { nanoid } from 'nanoid'
 
@@ -160,7 +160,29 @@ export const useFirestore = () => {
           setLoading((prev) => ({ ...prev, getDataE: false }));
         }
     };
-    
+
+    const addCuotaCab = async (dataCab) => {
+      try {
+        setLoading((prev) => ({ ...prev, addCuotaCab: true }));
+  
+        const newDoc = {
+          // Incluir los datos necesarios para la cabecera de la cuota
+          // Por ejemplo, fecha, importe total, etc.
+          ...dataCab,
+          Timestamp: serverTimestamp(),
+        };
+  
+        const docRef = await addDoc(collection(db, 'cuota_cab'), newDoc);
+  
+        console.log('Document written with ID: ', docRef.id);
+      } catch (error) {
+        console.error('Error adding document: ', error);
+        setError(error.message);
+      } finally {
+        setLoading((prev) => ({ ...prev, addCuotaCab: false }));
+      }
+    };
+      
     function getLastDayOfMonth(year, month) {
       const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     
@@ -303,6 +325,30 @@ export const useFirestore = () => {
             setLoading((prev)=>({ ...prev, updateData: false}));
         }
     }
+
+    const incrementarContadorBoleta = async () => {
+      const firestore = getFirestore();
+      try {
+        const contadorRef = doc(firestore, 'contadores', 'boleta');
+  
+        const nuevoValor = await runTransaction(firestore, async (transaction) => {
+          const docSnapshot = await transaction.get(contadorRef);
+          const valorActual = docSnapshot.data().valor;
+  
+          // Incrementar el valor del contador
+          const nuevoValor = valorActual + 1;
+          transaction.update(contadorRef, { valor: nuevoValor });
+  
+          return nuevoValor;
+        });
+  
+        return nuevoValor;
+      } catch (error) {
+        console.error('Error al incrementar el contador de boletas', error);
+        throw error;
+      }
+    };
+    
     return {
         dataFar,
         dataEmp,
@@ -314,7 +360,9 @@ export const useFirestore = () => {
         getDataEmpleadoById,
         updateEmpleado,
         getDataEmpleadosxPeri,
-        getSNR
+        getSNR,
+        addCuotaCab,
+        incrementarContadorBoleta
     }
     
 }
