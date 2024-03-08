@@ -1,4 +1,4 @@
-import { Avatar, FormHelperText, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Input,Checkbox } from '@mui/material'
+import { Avatar, FormHelperText, FormControl, MenuItem, Select, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Input,Checkbox } from '@mui/material'
 import React, { useContext, useEffect, useState } from 'react'
 import CalculateIcon from '@mui/icons-material/Calculate';
 import { Formik } from 'formik';
@@ -7,6 +7,7 @@ import { LoadingButton } from '@mui/lab';
 import Swal from 'sweetalert2';
 import { useFirestore } from '../hooks/useFirestore';
 import { useUserContext } from '../context/UserContext';
+import InputLabel from '@mui/material/InputLabel';
 
 const Cuota = () => {
 
@@ -19,6 +20,7 @@ const Cuota = () => {
   const [snrData, setSnrData] = useState([]);
   const [imprimirBoletaHabilitado, setImprimirBoletaHabilitado] = useState(false);
   const [erroresValidacion, setErroresValidacion] = useState([]);
+  const [medioPago, setMedioPago]=useState('');
 
   const [totales, setTotales] = useState({
     remuneraciones: 0,
@@ -110,6 +112,7 @@ const Cuota = () => {
         ...prevCuotas,
         [cuil]: cuota,
       }));
+
     }
     
     const handleRemuneracionChange = (e,cuil) => {
@@ -125,6 +128,7 @@ const Cuota = () => {
         ...prevCuotas,
         [cuil]: cuota,
       }));
+
     };
     
     const tota=()=>{
@@ -196,14 +200,22 @@ const Cuota = () => {
       let totsnr=0;
 
       copiedDataEmpleado.forEach((item, index) => {
-        if ((parseInt(remuneraciones[item.cuil]) === 0 || remuneraciones[item.cuil]===undefined || remuneraciones[item.cuil]===null) && item.sindical &&!item.licencia) {
+        console.log('float:',parseFloat(remuneraciones[item.cuil]))
+        if ((parseFloat(remuneraciones[item.cuil]) === 0 || remuneraciones[item.cuil]===undefined || remuneraciones[item.cuil]===null) && item.sindical &&!item.licencia) {
           errores.push({
             campo: "remuneracion",
             cuil: item.cuil,
             mensaje: "Remuneración no puede ser cero si es Sindical",
           });
         }
-    
+        if (parseFloat(remuneraciones[item.cuil]<0)){
+          errores.push({
+            campo: "remuneracion",
+            cuil: item.cuil,
+            mensaje: "Remuneración no puede ser menor a cero",
+          });
+        };
+
         // Validación para checkbox Licencia y Remuneración/S.N.R.
         if (item.licencia) {
           if (remuneraciones[item.cuil] !== 0) {
@@ -230,6 +242,9 @@ const Cuota = () => {
       return errores.length === 0;
     };
 
+    const handleChange2 = (event) => {
+      setMedioPago(event.target.value);
+    };
     return (
 
     <Box sx={{mt: 4, maxWidth: "1400px", mx: "auto", textAlign: "center", overflow: "scroll"}}>
@@ -346,7 +361,21 @@ const Cuota = () => {
                         <TableRow>
                           <TableCell colSpan={2}>Total a Pagar: $</TableCell>
                           <TableCell>{(totales.cuotasSindicales+totales.totalSNRData).toFixed(2)}</TableCell>
-                          <TableCell></TableCell>
+                          <TableCell>
+                          <FormControl sx={{ m: 1, minWidth: 300 }}>
+                            <InputLabel id="medio">MEDIO/PAGO</InputLabel>
+                           <Select
+                                labelId="medio"
+                                id="demo-simple-select-autowidth"
+                                value={medioPago}
+                                onChange={handleChange2}
+                                label="mediodepago"
+                              >
+                                <MenuItem value={'TR'}>TRANSFERENCIA</MenuItem>
+                                <MenuItem value={'MP'}>MERCADO PAGO</MenuItem>
+                            </Select>
+                          </FormControl>        
+                          </TableCell>
                         </TableRow>
                       </TableHead>
 
